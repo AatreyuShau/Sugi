@@ -18,3 +18,7 @@ Open <http://localhost:8001>. Use `A/D` or `←/→` to switch lanes and avoid g
 ```bash
 pytest -q tests/test_demo_scenes.py
 ```
+
+## Showcase coverage
+
+The tunnel runner demo highlights shader-style render commands, postprocess-like visual composition, and a static render tree that a web frontend can execute without owning scene logic.

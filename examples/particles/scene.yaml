@@ -1,0 +1,62 @@
+page:
+  id: particle_showcase
+  width: 1280
+  height: 720
+  background: "#030712"
+  children:
+    - type: text
+      id: title
+      text: "Particles and pen layers"
+      x: 48
+      y: 70
+      color: "#f8fafc"
+      font_size: 36
+    - type: particle_system
+      id: rain
+      effect: rain
+      x: 48
+      y: 110
+      width: 360
+      height: 500
+      color: "#082f49"
+      particle_color: "#7dd3fc"
+      rate: 420
+      velocity: 900
+      lifetime: 1.4
+      spread: 0.2
+      gravity: 1
+      wind: 24
+      components:
+        - type: ParticleEmitter
+          preset: rain
+    - type: particle_system
+      id: embers
+      effect: embers
+      x: 460
+      y: 110
+      width: 360
+      height: 500
+      color: "#431407"
+      particle_color: "#fb7185"
+      rate: 180
+      velocity: 160
+      lifetime: 2.8
+      spread: 0.9
+      gravity: -0.15
+      wind: 8
+      components:
+        - type: ParticleEmitter
+          preset: embers
+    - type: pen
+      id: trail_layer
+      x: 872
+      y: 110
+      width: 360
+      height: 500
+      color: "#111827"
+      components:
+        - type: PenLayer
+          brush: ribbon
+          pressure_curve: ease_out
+          history_limit: 140
+          glow: true

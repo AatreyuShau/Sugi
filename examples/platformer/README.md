@@ -41,3 +41,7 @@ pytest -q
 python -m compileall sugi examples/platformer/native tools
 python tools/export_render_tree.py examples/platformer/platformer.yaml /tmp/platformer_render_tree.json
 ```
+
+## Showcase coverage
+
+This demo is intentionally application-driven: keyboard input and collision remain in the frontend, while the shared SUGI scene defines the page, sprites, solids, goal component, text, and render tree consumed by both web and native frontends.
