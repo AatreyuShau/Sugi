@@ -1,6 +1,6 @@
 # Polished Portfolio Template
 
-This replaces the removed 3D runner with a portfolio-style canvas page that showcases richer SUGI render concepts:
+This replaces the removed 3D runner with a portfolio-style canvas page that showcases richer SUGI render concepts. Python owns the SUGI VM, stores relayed web information in DOM variables, computes the frame commands, and the browser only relays viewport/mouse/scroll state plus paints those commands to canvas:
 
 - Full-frame shader nodes (`FullFrameShader`) for aurora/grid backgrounds.
 - Per-node sprite rendering (`ImageSprite`) with per-sprite shader overlays (`ShaderSprite`).
@@ -13,14 +13,14 @@ This replaces the removed 3D runner with a portfolio-style canvas page that show
 From the repository root:
 
 ```bash
-python tools/export_render_tree.py examples/portfolio_template/portfolio.yaml examples/portfolio_template/web/render_tree.json
-python -m http.server 8002 --directory examples/portfolio_template/web
+python examples/portfolio_template/server/portfolio_server.py
 ```
 
-Open <http://localhost:8002>.
+Open <http://localhost:8766>.
 
 ## Test
 
 ```bash
 pytest -q tests/test_portfolio_template.py
+python -m compileall examples/portfolio_template/server
 ```

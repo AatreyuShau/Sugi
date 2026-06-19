@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from examples.portfolio_template.server.portfolio_server import PortfolioController
 from sugi.compiler import Compiler
 from sugi.vm import SugiVM
 from tools.export_render_tree import export_render_tree
@@ -20,3 +21,17 @@ def test_portfolio_template_exports_shader_sprite_and_pen_capabilities(tmp_path)
     assert "PenLayer" in encoded
     assert "ImageSprite" in encoded
     assert "ShaderSprite" in encoded
+
+
+def test_portfolio_python_controller_owns_interaction_state_and_frame_commands():
+    controller = PortfolioController()
+    controller.handle_event({"type": "viewport", "width": 1440, "height": 900, "scrollY": 1300})
+    controller.handle_event({"type": "mouse", "x": 720, "y": 360})
+    page = controller.vm.heap.get(controller.page)
+    assert page.variables["scroll_y"] == 1300
+    assert page.variables["mouse_x"] == 720
+    frame = controller.frame()
+    kinds = {command["kind"] for command in frame["commands"]}
+    assert "shader_rect" in kinds
+    assert "wrapped_text" in kinds
+    assert any(command.get("kind") in {"line", "polyline"} for command in frame["commands"])

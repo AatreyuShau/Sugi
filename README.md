@@ -26,5 +26,5 @@ See `examples/platformer/README.md` for a shared SUGI scene that can be exported
 
 Additional demos:
 
-- `examples/portfolio_template/README.md` shows a polished canvas portfolio with scroll lock, mouse trails, pen layers, full-frame shaders, and shader/image sprites.
+- `examples/portfolio_template/README.md` shows a polished Python-driven canvas portfolio with scroll lock, mouse trails, pen layers, full-frame shaders, and shader/image sprites.
 - `examples/login_canvas/README.md` shows a canvas-only browser login where Python owns interactions and rendering state.

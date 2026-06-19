@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SUGI Portfolio Template</title>
+  <title>SUGI Python Portfolio Template</title>
   <style>
     html, body { margin: 0; min-height: 4200px; background: #050816; overflow-x: hidden; }
     canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
@@ -12,211 +12,136 @@
 </head>
 <body>
 <canvas id="surface"></canvas>
-<div class="hint">Canvas only · SUGI render tree · shader sprites · pen trails · scroll lock</div>
+<div class="hint">Python owns SUGI DOM + rendering decisions · browser relays viewport/mouse/scroll</div>
 <script>
 const canvas = document.getElementById('surface');
 const ctx = canvas.getContext('2d');
-let nodes = [];
-let page = { properties: { width: 1440, height: 4200 } };
-let mouse = { x: 720, y: 360, tx: 720, ty: 360 };
-let trails = [];
-let t = 0;
-
-function flatten(input, output = []) {
-  for (const node of input) {
-    output.push(node);
-    flatten(node.children || [], output);
-  }
-  return output;
-}
+let latest = { width: 1, height: 1, pageHeight: 4200, commands: [] };
+let pendingRelay = false;
 
 function resize() {
-  canvas.width = innerWidth * devicePixelRatio;
-  canvas.height = innerHeight * devicePixelRatio;
+  canvas.width = Math.floor(innerWidth * devicePixelRatio);
+  canvas.height = Math.floor(innerHeight * devicePixelRatio);
+  relay({ type: 'viewport', width: canvas.width, height: canvas.height, scrollY: scrollY * devicePixelRatio });
 }
 
-function viewport() {
-  const designWidth = Number(page.properties.width || 1440);
-  const scale = canvas.width / designWidth;
-  const scroll = scrollY * devicePixelRatio / scale;
-  return { scale, scroll, width: designWidth, height: canvas.height / scale };
+async function relay(payload) {
+  await fetch('/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
 }
 
-function lockedScroll(raw) {
-  const start = 1180;
-  const end = 1980;
-  if (raw < start) return raw;
-  if (raw < end) return start + (raw - start) * 0.18;
-  return raw - (end - start) * 0.82;
+function relayViewportSoon() {
+  if (pendingRelay) return;
+  pendingRelay = true;
+  requestAnimationFrame(() => {
+    pendingRelay = false;
+    relay({ type: 'viewport', width: canvas.width, height: canvas.height, scrollY: scrollY * devicePixelRatio });
+  });
 }
 
-function roundRect(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-}
-
-function shaderFill(name, x, y, w, h, phase) {
-  if (name === 'aurora') {
-    const g = ctx.createRadialGradient(x + w * (0.35 + Math.sin(phase) * 0.1), y + h * 0.25, 20, x + w * 0.5, y + h * 0.4, w * 0.75);
+function shaderFill(command) {
+  const phase = command.phase || 0;
+  if (command.shader === 'aurora') {
+    const g = ctx.createRadialGradient(command.x + command.width * (0.35 + Math.sin(phase) * 0.1), command.y + command.height * 0.25, 20, command.x + command.width * 0.5, command.y + command.height * 0.4, command.width * 0.75);
     g.addColorStop(0, 'rgba(34,211,238,.72)');
     g.addColorStop(.42, 'rgba(139,92,246,.46)');
     g.addColorStop(1, 'rgba(244,114,182,0)');
     return g;
   }
-  if (name === 'grid_warp') {
-    const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  if (command.shader === 'grid_warp') {
+    const g = ctx.createLinearGradient(command.x, command.y, command.x + command.width, command.y + command.height);
     g.addColorStop(0, 'rgba(14,165,233,.4)');
     g.addColorStop(.5, 'rgba(99,102,241,.24)');
     g.addColorStop(1, 'rgba(236,72,153,.34)');
     return g;
   }
-  const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  const g = ctx.createLinearGradient(command.x, command.y, command.x + command.width, command.y + command.height);
   g.addColorStop(0, '#8b5cf6');
   g.addColorStop(1, '#22d3ee');
   return g;
 }
 
-function drawFullFrameShader(node, y, phase) {
-  const p = node.properties;
-  ctx.fillStyle = shaderFill(p.shader, Number(p.x), y, Number(p.width), Number(p.height), phase);
-  ctx.fillRect(Number(p.x), y, Number(p.width), Number(p.height));
-  if (p.shader === 'grid_warp') {
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.lineWidth = 1;
-    for (let x = 100; x < 1340; x += 54) {
-      ctx.beginPath();
-      ctx.moveTo(x + Math.sin(phase + x * .01) * 18, y + 40);
-      ctx.lineTo(x + Math.cos(phase + x * .02) * 24, y + 720);
-      ctx.stroke();
-    }
-  }
-}
-
-function drawSprite(node, y, phase) {
-  const p = node.properties;
-  const x = Number(p.x);
-  const w = Number(p.width);
-  const h = Number(p.height);
-  const hover = Math.hypot(mouse.x - (x + w / 2), mouse.y - (y + h / 2)) < 260;
-  const lift = hover ? -18 : 0;
-  roundRect(x, y + lift, w, h, 28);
-  ctx.fillStyle = shaderFill(p.shader, x, y + lift, w, h, phase + x * .003);
-  ctx.fill();
-  ctx.strokeStyle = hover ? 'rgba(255,255,255,.75)' : 'rgba(255,255,255,.22)';
-  ctx.lineWidth = hover ? 3 : 1;
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,.88)';
-  ctx.font = '700 24px system-ui, sans-serif';
-  ctx.fillText(node.id.replaceAll('_', ' '), x + 28, y + lift + h - 42);
-}
-
-function drawPenLayer(node, y) {
-  if (node.id === 'mouse_trails') {
-    ctx.lineCap = 'round';
-    for (let i = 1; i < trails.length; i++) {
-      const a = trails[i - 1];
-      const b = trails[i];
-      ctx.strokeStyle = `rgba(103,232,249,${i / trails.length * .55})`;
-      ctx.lineWidth = 2 + i / trails.length * 18;
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-    }
-  } else {
-    ctx.strokeStyle = 'rgba(244,114,182,.35)';
-    ctx.lineWidth = 18;
-    ctx.beginPath();
-    for (let x = 120; x < 1320; x += 30) {
-      const yy = y + 260 + Math.sin(x * .013 + t) * 46;
-      if (x === 120) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
-    }
-    ctx.stroke();
-  }
-}
-
-function drawText(node, y, progress) {
-  const p = node.properties;
-  const size = node.components.find(c => c.type === 'Text')?.size || 20;
-  const weight = node.components.find(c => c.type === 'Text')?.weight || 500;
-  ctx.fillStyle = p.color || '#fff';
-  ctx.font = `${weight} ${size}px system-ui, sans-serif`;
-  ctx.globalAlpha = Math.max(0, Math.min(1, progress));
-  const words = String(p.text).split(' ');
+function drawWrappedText(command) {
+  ctx.globalAlpha = command.alpha ?? 1;
+  ctx.fillStyle = command.fill;
+  ctx.font = `${command.weight || 500} ${command.size || 20}px system-ui, sans-serif`;
+  const words = String(command.text).split(' ');
   let line = '';
-  let yy = y;
-  const maxWidth = node.components.find(c => c.type === 'Text')?.max_width || 1050;
+  let y = command.y;
   for (const word of words) {
     const test = `${line}${word} `;
-    if (ctx.measureText(test).width > maxWidth && line) {
-      ctx.fillText(line, Number(p.x), yy);
+    if (ctx.measureText(test).width > (command.maxWidth || 900) && line) {
+      ctx.fillText(line, command.x, y);
       line = `${word} `;
-      yy += size * 1.25;
+      y += (command.size || 20) * 1.25;
     } else {
       line = test;
     }
   }
-  ctx.fillText(line, Number(p.x), yy);
+  ctx.fillText(line, command.x, y);
   ctx.globalAlpha = 1;
 }
 
-function drawSection(node, y) {
-  const p = node.properties;
-  roundRect(Number(p.x), y, Number(p.width), Number(p.height), 36);
-  ctx.fillStyle = 'rgba(15,23,42,.54)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.16)';
-  ctx.stroke();
+function drawCommand(command) {
+  if (command.kind === 'rect') {
+    ctx.fillStyle = command.fill;
+    ctx.fillRect(command.x, command.y, command.width, command.height);
+  }
+  if (command.kind === 'round_rect' || command.kind === 'shader_round_rect') {
+    ctx.beginPath();
+    ctx.roundRect(command.x, command.y, command.width, command.height, command.radius || 0);
+    ctx.fillStyle = command.kind === 'shader_round_rect' ? shaderFill(command) : command.fill;
+    ctx.fill();
+    if (command.stroke) {
+      ctx.strokeStyle = command.stroke;
+      ctx.lineWidth = command.lineWidth || 1;
+      ctx.stroke();
+    }
+  }
+  if (command.kind === 'shader_rect') {
+    ctx.fillStyle = shaderFill(command);
+    ctx.fillRect(command.x, command.y, command.width, command.height);
+  }
+  if (command.kind === 'line') {
+    ctx.lineCap = command.cap || 'butt';
+    ctx.strokeStyle = command.stroke;
+    ctx.lineWidth = command.width || 1;
+    ctx.beginPath();
+    ctx.moveTo(command.x1, command.y1);
+    ctx.lineTo(command.x2, command.y2);
+    ctx.stroke();
+  }
+  if (command.kind === 'polyline') {
+    ctx.lineCap = command.cap || 'round';
+    ctx.strokeStyle = command.stroke;
+    ctx.lineWidth = command.width || 1;
+    ctx.beginPath();
+    command.points.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.stroke();
+  }
+  if (command.kind === 'text') {
+    ctx.fillStyle = command.fill;
+    ctx.font = `${command.weight || 500} ${command.size || 20}px system-ui, sans-serif`;
+    ctx.fillText(command.text, command.x, command.y);
+  }
+  if (command.kind === 'wrapped_text') drawWrappedText(command);
 }
 
-function draw() {
-  t += 0.016;
-  mouse.x += (mouse.tx - mouse.x) * 0.12;
-  mouse.y += (mouse.ty - mouse.y) * 0.12;
-  trails.push({ x: mouse.x, y: mouse.y });
-  trails = trails.slice(-42);
-  const vp = viewport();
-  const scroll = lockedScroll(vp.scroll);
+async function pullFrame() {
+  latest = await fetch('/frame').then(response => response.json());
+  document.body.style.minHeight = `${Math.max(innerHeight, latest.pageHeight / devicePixelRatio)}px`;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(vp.scale, 0, 0, vp.scale, 0, 0);
-  ctx.fillStyle = '#050816';
-  ctx.fillRect(0, 0, vp.width, vp.height);
-  for (const node of nodes) {
-    if (node.type === 'page') continue;
-    const p = node.properties;
-    const parallax = node.type === 'shader' ? 0.35 : node.type === 'sprite' ? 0.82 : 1;
-    const y = Number(p.y || 0) - scroll * parallax;
-    if (y > vp.height + 240 || y + Number(p.height || 80) < -260) continue;
-    const progress = 1 - Math.min(1, Math.abs(y - vp.height * .45) / 460);
-    if (node.type === 'shader') drawFullFrameShader(node, y, t);
-    if (node.type === 'section') drawSection(node, y);
-    if (node.type === 'sprite') drawSprite(node, y, t);
-    if (node.type === 'pen') drawPenLayer(node, y);
-    if (node.type === 'text') drawText(node, y, progress + .25);
-  }
-  ctx.fillStyle = 'rgba(255,255,255,.7)';
-  ctx.font = '14px system-ui, sans-serif';
-  ctx.fillText(`scroll ${Math.round(scroll)} · render nodes ${nodes.length}`, 24, vp.height - 24);
-  requestAnimationFrame(draw);
-}
-
-async function boot() {
-  const tree = await fetch('render_tree.json').then(r => r.json());
-  nodes = flatten(tree);
-  page = nodes.find(node => node.type === 'page') || page;
-  document.body.style.minHeight = `${Number(page.properties.height || 4200)}px`;
-  draw();
+  const scale = latest.commands[0]?.scale || 1;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  latest.commands.forEach(drawCommand);
+  requestAnimationFrame(pullFrame);
 }
 
 addEventListener('resize', resize);
-addEventListener('mousemove', event => {
-  const vp = viewport();
-  mouse.tx = event.clientX * devicePixelRatio / vp.scale;
-  mouse.ty = event.clientY * devicePixelRatio / vp.scale;
-});
+addEventListener('scroll', relayViewportSoon, { passive: true });
+addEventListener('mousemove', event => relay({ type: 'mouse', x: event.clientX * devicePixelRatio, y: event.clientY * devicePixelRatio }), { passive: true });
 resize();
-boot();
+pullFrame();
 </script>
 </body>
 </html>
