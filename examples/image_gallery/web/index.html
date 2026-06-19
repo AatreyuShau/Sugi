@@ -13,6 +13,137 @@
 <body>
 <canvas id="surface"></canvas>
 <aside>SUGI scene owns visuals · this frontend only executes render commands</aside>
+<script id="render-tree-data" type="application/json">[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "gallery_showcase",
+    "properties": {
+      "width": 1280,
+      "height": 720,
+      "background": "#111827"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "text",
+        "id": "title",
+        "properties": {
+          "text": "Images, sprites, UVs, nine-slice, blend modes",
+          "x": 48,
+          "y": 70,
+          "color": "#f8fafc",
+          "font_size": 34
+        },
+        "components": [],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "image",
+        "id": "card_png",
+        "properties": {
+          "image": "assets/card.png",
+          "source": "assets/card.png",
+          "x": 48,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#1d4ed8"
+        },
+        "components": [
+          {
+            "type": "ImageSprite",
+            "source": "assets/card.png",
+            "cache": "async",
+            "format": "png"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
+        "type": "sprite",
+        "id": "nine_slice_panel",
+        "properties": {
+          "image": "assets/panel.webp",
+          "source": "assets/panel.webp",
+          "x": 360,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#581c87"
+        },
+        "components": [
+          {
+            "type": "ImageSprite",
+            "source": "assets/panel.webp",
+            "nine_slice": [
+              24,
+              24,
+              24,
+              24
+            ],
+            "color_overlay": "rgba(168,85,247,.32)"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 5,
+        "type": "sprite",
+        "id": "atlas_sprite",
+        "properties": {
+          "image": "assets/atlas.svg",
+          "source": "assets/atlas.svg",
+          "x": 672,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#064e3b"
+        },
+        "components": [
+          {
+            "type": "Sprite",
+            "texture": "assets/atlas.svg",
+            "uv_region": [
+              0,
+              0,
+              0.5,
+              0.5
+            ],
+            "blend_mode": "screen"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
+        "type": "sprite",
+        "id": "multi_texture",
+        "properties": {
+          "x": 984,
+          "y": 120,
+          "width": 220,
+          "height": 340,
+          "color": "#7f1d1d"
+        },
+        "components": [
+          {
+            "type": "ShaderSprite",
+            "shader": "liquid_glass",
+            "textures": [
+              "assets/albedo.jpg",
+              "assets/normal.webp"
+            ]
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+]</script>
 <script>
 const canvas = document.getElementById('surface');
 const ctx = canvas.getContext('2d');
@@ -21,7 +152,7 @@ function flatten(nodes, out = []) { for (const node of nodes) { out.push(node); 
 function resize(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
 function shaderFill(p){ const g = ctx.createLinearGradient(p.x, p.y, p.x + (p.width || 1), p.y + (p.height || 1)); g.addColorStop(0, p.color || '#22d3ee'); g.addColorStop(.5, '#8b5cf6'); g.addColorStop(1, '#f472b6'); return g; }
 function drawNode(node){ const p = node.properties || {}; const type = node.type; if (['page','viewport','container','section','panel','button','sprite','image','shader','shader_surface','particle_system','pen','camera','scroll_region'].includes(type)) { if (type !== 'page') { ctx.fillStyle = p.shader ? shaderFill(p) : (p.color || 'rgba(15,23,42,.72)'); const r = Number(p.radius || 16); ctx.beginPath(); ctx.roundRect(Number(p.x||0), Number(p.y||0), Number(p.width||0), Number(p.height||0), r); ctx.fill(); if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.stroke(); } } } if (type === 'text' || p.text || p.label) { ctx.fillStyle = p.text_color || p.color || '#f8fafc'; ctx.font = `${p.weight || 600} ${p.font_size || 22}px system-ui, sans-serif`; ctx.fillText(p.text || p.label || node.id, Number(p.x||24), Number(p.y||40)); } if (type === 'particle_system') { ctx.fillStyle = p.particle_color || '#bae6fd'; for (let i=0;i<80;i++){ ctx.globalAlpha=.25+(i%7)/12; ctx.beginPath(); ctx.arc(Number(p.x||0)+(i*47)%Number(p.width||400), Number(p.y||0)+(i*83)%Number(p.height||240), Number(p.size||2), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; } (node.children || []).forEach(drawNode); }
-async function boot(){ resize(); tree = await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
+async function boot(){ resize(); const embedded = document.getElementById('render-tree-data')?.textContent; tree = embedded ? JSON.parse(embedded) : await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
 function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); const root = tree[0]?.properties || {}; const sx = canvas.width / Number(root.width || 1280), sy = canvas.height / Number(root.height || 720); ctx.setTransform(Math.min(sx,sy),0,0,Math.min(sx,sy),0,0); tree.forEach(drawNode); requestAnimationFrame(draw); }
 addEventListener('resize', resize); boot();
 </script>

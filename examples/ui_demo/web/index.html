@@ -13,6 +13,159 @@
 <body>
 <canvas id="surface"></canvas>
 <aside>SUGI scene owns visuals · this frontend only executes render commands</aside>
+<script id="render-tree-data" type="application/json">[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "ui_showcase",
+    "properties": {
+      "width": 1280,
+      "height": 720,
+      "background": "#07111f"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "text",
+        "id": "title",
+        "properties": {
+          "text": "UI, layout, text, events",
+          "x": 48,
+          "y": 72,
+          "color": "#e0f2fe",
+          "font_size": 34,
+          "weight": 800
+        },
+        "components": [
+          {
+            "type": "Text",
+            "value": "UI, layout, text, events",
+            "weight": 800,
+            "alignment": "left",
+            "wrapping": true,
+            "tracking": 0.3,
+            "line_height": 1.2,
+            "drop_shadow": true
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "panel",
+        "id": "flex_panel",
+        "properties": {
+          "class": "card interactive",
+          "x": 48,
+          "y": 110,
+          "width": 520,
+          "height": 360,
+          "color": "#172554",
+          "radius": 28,
+          "style.layout": "flex",
+          "style.gap": 16
+        },
+        "components": [
+          {
+            "type": "Transform",
+            "opacity": 0.96
+          },
+          {
+            "type": "Glow",
+            "strength": 0.35
+          }
+        ],
+        "children": [
+          {
+            "handle": 4,
+            "type": "button",
+            "id": "primary_action",
+            "properties": {
+              "text": "Dispatch event",
+              "class": "cta",
+              "x": 84,
+              "y": 174,
+              "width": 220,
+              "height": 64,
+              "color": "#38bdf8",
+              "text_color": "#082f49",
+              "radius": 18
+            },
+            "components": [],
+            "children": []
+          },
+          {
+            "handle": 5,
+            "type": "button",
+            "id": "secondary_action",
+            "properties": {
+              "text": "Play animation",
+              "x": 326,
+              "y": 174,
+              "width": 200,
+              "height": 64,
+              "color": "#a78bfa",
+              "text_color": "#1e1b4b",
+              "radius": 18,
+              "animations": {
+                "hover": {
+                  "scale": {
+                    "from": 1,
+                    "to": 1.08
+                  }
+                }
+              }
+            },
+            "components": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "handle": 6,
+        "type": "scroll_region",
+        "id": "scroll_features",
+        "properties": {
+          "x": 620,
+          "y": 110,
+          "width": 560,
+          "height": 360,
+          "color": "#0f172a",
+          "radius": 28
+        },
+        "components": [
+          {
+            "type": "ScrollLock",
+            "start": 120,
+            "end": 580
+          },
+          {
+            "type": "Blur",
+            "radius": 14
+          }
+        ],
+        "children": [
+          {
+            "handle": 7,
+            "type": "text",
+            "id": "scroll_text",
+            "properties": {
+              "text": "Scroll regions, sticky panels, viewport variables and subscriptions are declarative scene features.",
+              "x": 656,
+              "y": 172,
+              "color": "#cbd5e1",
+              "font_size": 22,
+              "max_width": 470
+            },
+            "components": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]</script>
 <script>
 const canvas = document.getElementById('surface');
 const ctx = canvas.getContext('2d');
@@ -21,7 +174,7 @@ function flatten(nodes, out = []) { for (const node of nodes) { out.push(node); 
 function resize(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
 function shaderFill(p){ const g = ctx.createLinearGradient(p.x, p.y, p.x + (p.width || 1), p.y + (p.height || 1)); g.addColorStop(0, p.color || '#22d3ee'); g.addColorStop(.5, '#8b5cf6'); g.addColorStop(1, '#f472b6'); return g; }
 function drawNode(node){ const p = node.properties || {}; const type = node.type; if (['page','viewport','container','section','panel','button','sprite','image','shader','shader_surface','particle_system','pen','camera','scroll_region'].includes(type)) { if (type !== 'page') { ctx.fillStyle = p.shader ? shaderFill(p) : (p.color || 'rgba(15,23,42,.72)'); const r = Number(p.radius || 16); ctx.beginPath(); ctx.roundRect(Number(p.x||0), Number(p.y||0), Number(p.width||0), Number(p.height||0), r); ctx.fill(); if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.stroke(); } } } if (type === 'text' || p.text || p.label) { ctx.fillStyle = p.text_color || p.color || '#f8fafc'; ctx.font = `${p.weight || 600} ${p.font_size || 22}px system-ui, sans-serif`; ctx.fillText(p.text || p.label || node.id, Number(p.x||24), Number(p.y||40)); } if (type === 'particle_system') { ctx.fillStyle = p.particle_color || '#bae6fd'; for (let i=0;i<80;i++){ ctx.globalAlpha=.25+(i%7)/12; ctx.beginPath(); ctx.arc(Number(p.x||0)+(i*47)%Number(p.width||400), Number(p.y||0)+(i*83)%Number(p.height||240), Number(p.size||2), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; } (node.children || []).forEach(drawNode); }
-async function boot(){ resize(); tree = await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
+async function boot(){ resize(); const embedded = document.getElementById('render-tree-data')?.textContent; tree = embedded ? JSON.parse(embedded) : await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
 function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); const root = tree[0]?.properties || {}; const sx = canvas.width / Number(root.width || 1280), sy = canvas.height / Number(root.height || 720); ctx.setTransform(Math.min(sx,sy),0,0,Math.min(sx,sy),0,0); tree.forEach(drawNode); requestAnimationFrame(draw); }
 addEventListener('resize', resize); boot();
 </script>
