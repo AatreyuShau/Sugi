@@ -1,0 +1,76 @@
+page:
+  id: login_scene
+  width: 720
+  height: 480
+  background: "#0f172a"
+  children:
+    - type: panel
+      id: card
+      x: 180
+      y: 82
+      width: 360
+      height: 316
+      radius: 18
+      color: "#1e293b"
+      components:
+        - type: Geometry
+          shape: rounded_rect
+    - type: text
+      id: title
+      x: 240
+      y: 120
+      text: "SUGI Secure Login"
+      color: "#f8fafc"
+      components:
+        - type: Text
+          size: 28
+    - type: input
+      id: username
+      x: 230
+      y: 184
+      width: 260
+      height: 44
+      label: "Username"
+      value: ""
+      variables:
+        focused: false
+      components:
+        - type: TextInput
+          field: username
+    - type: input
+      id: password
+      x: 230
+      y: 250
+      width: 260
+      height: 44
+      label: "Password"
+      value: ""
+      variables:
+        focused: false
+      components:
+        - type: TextInput
+          field: password
+          secret: true
+    - type: button
+      id: login_button
+      x: 230
+      y: 320
+      width: 260
+      height: 48
+      text: "Sign in"
+      color: "#38bdf8"
+      on_click:
+        - call: login
+      components:
+        - type: Button
+        - type: Text
+          value: "Sign in"
+    - type: text
+      id: status
+      x: 230
+      y: 386
+      text: "Try demo / sugi"
+      color: "#94a3b8"
+      components:
+        - type: Text
+          size: 16

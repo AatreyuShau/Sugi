@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI Platformer Web</title>
+  <style>
+    html, body, canvas { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #101827; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<script>
+const DESIGN_WIDTH = 960;
+const DESIGN_HEIGHT = 540;
+const canvas = document.getElementById('surface');
+const ctx = canvas.getContext('2d');
+const keys = new Set();
+let nodes = [];
+let player;
+let solids = [];
+let goal;
+let world = { gravity: 1600, move_speed: 260, jump_velocity: -620 };
+
+function flatten(input, output = []) {
+  for (const node of input) {
+    output.push(node);
+    flatten(node.children || [], output);
+  }
+  return output;
+}
+
+function resize() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.style.height = `${window.innerHeight}px`;
+}
+
+function overlaps(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+function nodeRect(node) {
+  const p = node.properties;
+  return { x: Number(p.x), y: Number(p.y), width: Number(p.width), height: Number(p.height) };
+}
+
+function update(dt) {
+  const left = keys.has('a') || keys.has('arrowleft');
+  const right = keys.has('d') || keys.has('arrowright');
+  const jump = keys.has('w') || keys.has(' ') || keys.has('arrowup');
+  player.vx = (left ? -world.move_speed : 0) + (right ? world.move_speed : 0);
+  if (jump && player.grounded) {
+    player.vy = world.jump_velocity;
+    player.grounded = false;
+  }
+  player.vy += world.gravity * dt;
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+  player.grounded = false;
+  for (const solid of solids) {
+    const rect = nodeRect(solid);
+    if (overlaps(player, rect) && player.vy >= 0) {
+      player.y = rect.y - player.height;
+      player.vy = 0;
+      player.grounded = true;
+    }
+  }
+  player.x = Math.max(0, Math.min(DESIGN_WIDTH - player.width, player.x));
+  if (player.y > DESIGN_HEIGHT) Object.assign(player, { x: 96, y: 368, vx: 0, vy: 0 });
+}
+
+function draw() {
+  const scale = Math.min(canvas.width / DESIGN_WIDTH, canvas.height / DESIGN_HEIGHT);
+  const ox = (canvas.width - DESIGN_WIDTH * scale) / 2;
+  const oy = (canvas.height - DESIGN_HEIGHT * scale) / 2;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#101827';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(scale, 0, 0, scale, ox, oy);
+  for (const node of nodes) {
+    const p = node.properties;
+    if (node.type === 'sprite' || node.type === 'platform') {
+      const rect = node === player.node ? player : nodeRect(node);
+      ctx.fillStyle = p.color || '#ffffff';
+      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+    }
+    if (node.type === 'text') {
+      ctx.fillStyle = p.color || '#ffffff';
+      ctx.font = '20px system-ui, sans-serif';
+      ctx.fillText(p.text, Number(p.x), Number(p.y));
+    }
+  }
+  if (overlaps(player, nodeRect(goal))) {
+    ctx.fillStyle = '#facc15';
+    ctx.font = '700 36px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('You reached the goal!', DESIGN_WIDTH / 2, 120);
+    ctx.textAlign = 'start';
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  update(Math.min(0.033, (now - last) / 1000));
+  draw();
+  last = now;
+  requestAnimationFrame(frame);
+}
+
+async function boot() {
+  const tree = await fetch('render_tree.json').then(response => {
+    if (!response.ok) throw new Error('Generate render_tree.json first with tools/export_render_tree.py');
+    return response.json();
+  });
+  nodes = flatten(tree);
+  const root = nodes.find(node => node.type === 'page');
+  world = { ...world, ...root.properties };
+  const playerNode = nodes.find(node => String(node.properties.class || '').split(/\s+/).includes('player'));
+  player = { ...nodeRect(playerNode), vx: 0, vy: 0, grounded: false, node: playerNode };
+  solids = nodes.filter(node => String(node.properties.class || '').split(/\s+/).includes('solid'));
+  goal = nodes.find(node => node.components.some(component => component.type === 'Goal'));
+  requestAnimationFrame(frame);
+}
+
+addEventListener('resize', resize);
+addEventListener('keydown', event => keys.add(event.key.toLowerCase()));
+addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
+resize();
+boot().catch(error => {
+  ctx.fillStyle = '#f87171';
+  ctx.font = '20px monospace';
+  ctx.fillText(error.message, 24, 48);
+});
+</script>
+</body>
+</html>
