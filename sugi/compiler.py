@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 try:
     import yaml  # type: ignore
@@ -7,8 +8,10 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when PyYAML is unava
     yaml = None
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
+from .assets import MaterialResource
+from .scene import CompiledScene
 
-_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations"}
+_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations", "states", "classes", "tags"}
 
 
 class Compiler:
@@ -19,6 +22,32 @@ class Compiler:
         instructions: list[Instruction] = []
         self._emit_node(ast["page"], None, instructions, default_type="page")
         return BytecodeProgram(tuple(instructions))
+
+    def compile_json(self, source: str) -> BytecodeProgram:
+        ast = json.loads(source)
+        return self.compile_mapping(ast)
+
+    def compile_scene(self, source: str, source_format: str = "yaml") -> CompiledScene:
+        ast = json.loads(source) if source_format == "json" else (yaml.safe_load(source) if yaml is not None else _simple_yaml_load(source))
+        program = self.compile_mapping(ast)
+        node_count = sum(1 for instruction in program.instructions if instruction.opcode == OpCode.CREATE_NODE)
+        materials = self._parse_materials(ast.get("materials", {}) if isinstance(ast, dict) else {})
+        return CompiledScene(program=program, node_count=node_count, source_format=source_format, materials=materials)
+
+    def compile_mapping(self, ast: dict[str, Any]) -> BytecodeProgram:
+        if not isinstance(ast, dict) or "page" not in ast:
+            raise ValueError("SUGI scene root must contain a page object")
+        instructions: list[Instruction] = []
+        self._emit_node(ast["page"], None, instructions, default_type="page")
+        return BytecodeProgram(tuple(instructions))
+
+    def _parse_materials(self, specs: dict[str, Any]) -> dict[str, MaterialResource]:
+        materials: dict[str, MaterialResource] = {}
+        for name, spec in (specs or {}).items():
+            if not isinstance(spec, dict) or not spec.get("vertex") or not spec.get("fragment"):
+                raise ValueError(f"material {name!r} requires vertex and fragment shader paths")
+            materials[name] = MaterialResource(name=name, vertex=spec["vertex"], fragment=spec["fragment"], uniforms=dict(spec.get("uniforms") or {}))
+        return materials
 
     def _emit_node(self, spec: dict[str, Any], parent_id: str | None, out: list[Instruction], default_type: str | None = None) -> None:
         if not isinstance(spec, dict):
@@ -39,6 +68,12 @@ class Compiler:
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": f"style.{key}", "value": value}))
         if spec.get("animations"):
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "animations", "value": spec["animations"]}))
+        for state, value in (spec.get("states") or {}).items():
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": f"state.{state}", "value": value}))
+        if spec.get("classes"):
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "classes", "value": spec["classes"]}))
+        if spec.get("tags"):
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "tags", "value": spec["tags"]}))
         for component in spec.get("components") or []:
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "component", "value": component}))
         events = dict(spec.get("events") or {})

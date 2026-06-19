@@ -24,3 +24,7 @@ Open <http://localhost:8766>.
 pytest -q tests/test_portfolio_template.py
 python -m compileall examples/portfolio_template/server
 ```
+
+## Showcase coverage
+
+The portfolio demo exercises scroll variables, scroll lock components, shader surfaces, shader/image sprites, pen layers, wrapped text, mouse trails, and Python-owned state mutation with SUGI-owned rendering.

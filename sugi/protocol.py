@@ -46,6 +46,8 @@ class ProtocolServer:
             return self.vm.set_property(message["node"], message["property"], message.get("value"))
         if command == "set_variable":
             return self.vm.set_variable(message["node"], message["variable"], message.get("value"))
+        if command == "set_uniform":
+            return self.vm.set_uniform(message["node"], message["uniform"], message.get("value"))
         if command == "append_child":
             return self.vm.heap.append_child(message["parent"], message["child"])
         if command == "remove_child":
@@ -56,6 +58,10 @@ class ProtocolServer:
             return self.vm.dispatch_event(message["node"], message["event"], message.get("payload"))
         if command == "play_animation":
             return self.vm.play_animation(message["node"], message["animation"])
-        if command in {"mount", "unmount", "subscribe", "unsubscribe", "call", "watch"}:
+        if command == "subscribe":
+            return self.vm.subscribe(message.get("topic", "events"), message["node"])
+        if command == "unsubscribe":
+            return self.vm.unsubscribe(message.get("topic", "events"), message["node"])
+        if command in {"mount", "unmount", "call", "watch"}:
             return {"accepted": True, "command": command}
         raise ValueError(f"unsupported command: {command}")

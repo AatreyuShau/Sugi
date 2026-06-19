@@ -22,3 +22,7 @@ Credentials:
 ```bash
 pytest -q tests/test_login_canvas_demo.py
 ```
+
+## Showcase coverage
+
+The login demo exercises input nodes, text rendering, focus variables, protocol-style browser event relay, and server-owned VM mutations while the browser only executes draw commands.

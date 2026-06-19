@@ -13,7 +13,9 @@ def test_platformer_scene_drives_native_render_tree():
     player = next(node for node in nodes if "player" in str(node.properties.get("class", "")).split())
     assert vm.heap.get(player.handle).variables["grounded"] is False
     assert any(component["type"] == "PlatformerBody" for component in player.components)
-    assert len([node for node in nodes if "solid" in str(node.properties.get("class", "")).split()]) == 3
+    assert len([node for node in nodes if "solid" in str(node.properties.get("class", "")).split()]) == 5
+    assert any(node.id == "shader_sky" and node.properties.get("material") == "sky" for node in nodes)
+    assert any(node.id == "sine_water" and node.type == "pen" for node in nodes)
 
 
 def test_platformer_web_export_contains_goal_and_platforms(tmp_path):
@@ -24,3 +26,7 @@ def test_platformer_web_export_contains_goal_and_platforms(tmp_path):
     assert "PlatformerBody" in encoded
     assert "Goal" in encoded
     assert "ledge_mid" in encoded
+    assert "assets/images/hero.svg" in encoded
+    assert "sine_water" in encoded
+    assert "water_backdrop" in encoded
+    assert "ShaderMaterial" in encoded

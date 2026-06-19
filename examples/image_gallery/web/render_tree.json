@@ -1,0 +1,120 @@
+[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "gallery_showcase",
+    "properties": {
+      "width": 1280,
+      "height": 720,
+      "background": "#111827"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "text",
+        "id": "title",
+        "properties": {
+          "text": "Images, sprites, UVs, nine-slice, blend modes",
+          "x": 48,
+          "y": 70,
+          "color": "#f8fafc",
+          "font_size": 34
+        },
+        "components": [],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "image",
+        "id": "card_png",
+        "properties": {
+          "image": "assets/card.png",
+          "source": "assets/card.png",
+          "x": 48,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#1d4ed8"
+        },
+        "components": [
+          {
+            "type": "ImageSprite",
+            "source": "assets/card.png",
+            "cache": "async",
+            "format": "png"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
+        "type": "sprite",
+        "id": "nine_slice_panel",
+        "properties": {
+          "image": "assets/panel.webp",
+          "source": "assets/panel.webp",
+          "x": 360,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#581c87"
+        },
+        "components": [
+          {
+            "type": "ImageSprite",
+            "source": "assets/panel.webp",
+            "nine_slice": "[24, 24, 24, 24]",
+            "color_overlay": "rgba(168,85,247,.32)"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 5,
+        "type": "sprite",
+        "id": "atlas_sprite",
+        "properties": {
+          "image": "assets/atlas.svg",
+          "source": "assets/atlas.svg",
+          "x": 672,
+          "y": 120,
+          "width": 260,
+          "height": 340,
+          "color": "#064e3b"
+        },
+        "components": [
+          {
+            "type": "Sprite",
+            "texture": "assets/atlas.svg",
+            "uv_region": "[0, 0, 0.5, 0.5]",
+            "blend_mode": "screen"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
+        "type": "sprite",
+        "id": "multi_texture",
+        "properties": {
+          "x": 984,
+          "y": 120,
+          "width": 220,
+          "height": 340,
+          "color": "#7f1d1d"
+        },
+        "components": [
+          {
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "textures": "[assets/albedo.jpg, assets/normal.webp]"
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+]

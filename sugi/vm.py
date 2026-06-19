@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any, Callable
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
+from .scene import CompiledScene
 from .dom import Component, DomHeap, NodeHandle
 
 Watcher = Callable[[dict[str, Any]], None]
@@ -14,10 +15,16 @@ class SugiVM:
         self.heap = DomHeap()
         self._watchers: dict[NodeHandle, list[Watcher]] = defaultdict(list)
         self._mounted: dict[str, NodeHandle] = {}
+        self.materials = {}
+        self._subscriptions: dict[str, set[NodeHandle]] = defaultdict(set)
 
     def execute(self, program: BytecodeProgram) -> None:
         for instruction in program.instructions:
             self.execute_instruction(instruction)
+
+    def execute_scene(self, scene: CompiledScene) -> None:
+        self.materials.update(scene.materials)
+        self.execute(scene.program)
 
     def execute_instruction(self, instruction: Instruction) -> Any:
         p = instruction.payload
@@ -51,12 +58,44 @@ class SugiVM:
             if not isinstance(value, dict) or "type" not in value:
                 raise ValueError("component property requires an object with a type")
             target.components.append(Component(value["type"], {k: v for k, v in value.items() if k != "type"}))
+        elif name == "animations":
+            target.animations = dict(value or {})
+            target.properties[name] = value
+        elif name.startswith("state."):
+            target.states[name.split(".", 1)[1]] = value
+        elif name == "classes":
+            target.classes = set(value if isinstance(value, list) else str(value).split())
+            target.properties["class"] = " ".join(sorted(target.classes))
+        elif name == "tags":
+            target.tags = set(value if isinstance(value, list) else str(value).split())
         else:
             target.properties[name] = value
+            if name == "class":
+                target.classes = set(str(value).split())
+            if name == "image":
+                target.properties.setdefault("source", value)
+        target.dirty = True
+        self.heap.dirty_nodes.add(node)
         self._notify({"event": "property_changed", "node": node, "property": name, "value": value})
 
+    def set_uniform(self, node: NodeHandle, name: str, value: Any) -> None:
+        target = self.heap.get(node)
+        for component in target.components:
+            if component.type == "ShaderMaterial":
+                uniforms = component.values.setdefault("uniforms", {})
+                uniforms[name] = value
+                break
+        else:
+            target.properties[f"uniform.{name}"] = value
+        target.dirty = True
+        self.heap.dirty_nodes.add(node)
+        self._notify({"event": "uniform_changed", "node": node, "uniform": name, "value": value})
+
     def set_variable(self, node: NodeHandle, name: str, value: Any) -> None:
-        self.heap.get(node).variables[name] = value
+        target = self.heap.get(node)
+        target.variables[name] = value
+        target.dirty = True
+        self.heap.dirty_nodes.add(node)
         self._notify({"event": "variable_changed", "node": node, "variable": name, "value": value})
 
     def register_event(self, node: NodeHandle, event: str, handlers: list[dict[str, Any]]) -> None:
@@ -77,7 +116,7 @@ class SugiVM:
 
     def play_animation(self, node: NodeHandle, name: str) -> None:
         target = self.heap.get(node)
-        animations = target.properties.get("animations", {})
+        animations = target.animations or target.properties.get("animations", {})
         if name not in animations:
             raise KeyError(f"unknown animation {name!r} for node {target.id}")
         target.variables["active_animation"] = {"name": name, "definition": animations[name]}
@@ -85,6 +124,12 @@ class SugiVM:
 
     def watch(self, node: NodeHandle, callback: Watcher) -> None:
         self._watchers[node].append(callback)
+
+    def subscribe(self, topic: str, node: NodeHandle) -> None:
+        self._subscriptions[topic].add(node)
+
+    def unsubscribe(self, topic: str, node: NodeHandle) -> None:
+        self._subscriptions[topic].discard(node)
 
     def query(self, selector: str) -> list[NodeHandle]:
         if selector.startswith("#"):
@@ -99,7 +144,7 @@ class SugiVM:
             token = parts[0]
             if token.startswith("."):
                 klass = token[1:]
-                return [n.handle for n in nodes if klass in str(n.properties.get("class", "")).split()]
+                return [n.handle for n in nodes if klass in n.classes or klass in str(n.properties.get("class", "")).split()]
             return [n.handle for n in nodes if n.type == token]
         if len(parts) == 2:
             ancestors = set(self.query(parts[0]))

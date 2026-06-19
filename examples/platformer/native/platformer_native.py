@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 import sys
 import tkinter as tk
@@ -44,56 +45,70 @@ def flatten(nodes: tuple[RenderNode, ...]) -> list[RenderNode]:
     return result
 
 
+def node_classes(node: RenderNode) -> set[str]:
+    return set(str(node.properties.get("class", "")).split())
+
+
 class PlatformerApp:
     def __init__(self) -> None:
         self.vm, self.roots = load_scene()
         self.nodes = flatten(self.roots)
-        player = next(node for node in self.nodes if node.properties.get("class", "").find("player") >= 0)
+        self.root_node = next(node for node in self.nodes if node.type == "page")
+        player = next(node for node in self.nodes if "player" in node_classes(node))
         self.player_handle = player.handle
         self.player = Body(float(player.properties["x"]), float(player.properties["y"]), 0, 0, float(player.properties["width"]), float(player.properties["height"]))
-        self.solid_nodes = [node for node in self.nodes if "solid" in str(node.properties.get("class", "")).split()]
-        self.goal = next(node for node in self.nodes if node.properties.get("id") == "goal" or node.type == "sprite" and node.properties.get("color") == "#facc15")
+        self.solid_nodes = [node for node in self.nodes if "solid" in node_classes(node)]
+        self.goal = next(node for node in self.nodes if "goal" in node_classes(node))
         self.keys: set[str] = set()
-        self.root = tk.Tk()
-        self.root.title("SUGI Platformer Native")
-        self.canvas = tk.Canvas(self.root, width=WIDTH, height=HEIGHT, bg="#101827", highlightthickness=0)
+        self.camera_x = 0.0
+        self.tick_count = 0
+        self.app = tk.Tk()
+        self.app.title("SUGI Horizontal Platformer Native")
+        self.canvas = tk.Canvas(self.app, width=WIDTH, height=HEIGHT, bg="#06111f", highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
-        self.root.bind("<KeyPress>", lambda event: self.keys.add(event.keysym.lower()))
-        self.root.bind("<KeyRelease>", lambda event: self.keys.discard(event.keysym.lower()))
+        self.app.bind("<KeyPress>", lambda event: self.keys.add(event.keysym.lower()))
+        self.app.bind("<KeyRelease>", lambda event: self.keys.discard(event.keysym.lower()))
 
     def run(self) -> None:
         self.tick()
-        self.root.mainloop()
+        self.app.mainloop()
 
     def tick(self) -> None:
         self.update_physics(1 / 60)
         self.draw()
-        self.root.after(16, self.tick)
+        self.tick_count += 1
+        self.app.after(16, self.tick)
 
     def update_physics(self, dt: float) -> None:
         left = any(key in self.keys for key in {"a", "left"})
         right = any(key in self.keys for key in {"d", "right"})
         jump = any(key in self.keys for key in {"w", "space", "up"})
-        speed = float(self.vm.heap.get(1).variables.get("move_speed", 260))
-        gravity = float(self.vm.heap.get(1).variables.get("gravity", 1600))
-        jump_velocity = float(self.vm.heap.get(1).variables.get("jump_velocity", -620))
+        root = self.vm.heap.get(self.root_node.handle)
+        speed = float(root.variables.get("move_speed", 340))
+        gravity = float(root.variables.get("gravity", 1600))
+        jump_velocity = float(root.variables.get("jump_velocity", -650))
+        world_width = float(root.properties.get("world_width", WIDTH))
         self.player.vx = (-speed if left else 0) + (speed if right else 0)
         if jump and self.player.grounded:
             self.player.vy = jump_velocity
             self.player.grounded = False
         self.player.vy += gravity * dt
+        previous_y = self.player.y
         self.player.x += self.player.vx * dt
         self.player.y += self.player.vy * dt
         self.player.grounded = False
         for solid in self.solid_nodes:
             sx, sy, sw, sh = (float(solid.properties[name]) for name in ("x", "y", "width", "height"))
-            if self.overlaps(self.player.x, self.player.y, self.player.width, self.player.height, sx, sy, sw, sh) and self.player.vy >= 0:
+            falling_onto = previous_y + self.player.height <= sy + 8 and self.player.vy >= 0
+            if falling_onto and self.overlaps(self.player.x, self.player.y, self.player.width, self.player.height, sx, sy, sw, sh):
                 self.player.y = sy - self.player.height
                 self.player.vy = 0
                 self.player.grounded = True
-        self.player.x = max(0, min(WIDTH - self.player.width, self.player.x))
-        if self.player.y > HEIGHT:
-            self.player.x, self.player.y, self.player.vx, self.player.vy = 96, 368, 0, 0
+        self.player.x = max(0, min(world_width - self.player.width, self.player.x))
+        if self.player.y > HEIGHT + 180:
+            self.player.x, self.player.y, self.player.vx, self.player.vy = 96, 364, 0, 0
+        target_camera = max(0, min(world_width - WIDTH, self.player.x - WIDTH * 0.42))
+        self.camera_x += (target_camera - self.camera_x) * 0.12
         self.vm.set_property(self.player_handle, "x", round(self.player.x, 2))
         self.vm.set_property(self.player_handle, "y", round(self.player.y, 2))
         self.vm.set_variable(self.player_handle, "grounded", self.player.grounded)
@@ -102,18 +117,61 @@ class PlatformerApp:
     def overlaps(ax: float, ay: float, aw: float, ah: float, bx: float, by: float, bw: float, bh: float) -> bool:
         return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 
+    def draw_shader_rect(self, node: RenderNode) -> None:
+        p = node.properties
+        parallax = float(p.get("parallax", 1))
+        x = float(p.get("x", 0)) - self.camera_x * parallax
+        y = float(p.get("y", 0))
+        w = float(p.get("width", 0))
+        h = float(p.get("height", 0))
+        steps = 18
+        for i in range(steps):
+            t = i / max(steps - 1, 1)
+            r = int(2 + 120 * t)
+            g = int(132 - 56 * t)
+            b = int(199 + 40 * math.sin(t * math.pi))
+            self.canvas.create_rectangle(x, y + h * t, x + w, y + h * (t + 1 / steps), fill=f"#{r:02x}{g:02x}{b:02x}", outline="")
+
+    def draw_water(self, node: RenderNode) -> None:
+        p = node.properties
+        x0 = float(p.get("x", 0)) - self.camera_x
+        y = float(p.get("y", 0))
+        w = float(p.get("width", 0))
+        h = float(p.get("height", 0))
+        self.canvas.create_rectangle(x0, y + 18, x0 + w, y + h, fill="#075985", outline="")
+        phase = self.tick_count / 12
+        points = []
+        for x in range(0, int(w) + 1, 18):
+            points.extend([x0 + x, y + 24 + math.sin((x + phase * 28) / 92) * 14])
+        self.canvas.create_line(*points, fill="#67e8f9", width=5, smooth=True)
+        self.canvas.create_line(*points, fill="#38bdf8", width=12, smooth=True)
+
     def draw(self) -> None:
         self.canvas.delete("all")
         for node in self.nodes:
-            if node.type in {"sprite", "platform"}:
+            if node.type == "shader_surface":
+                self.draw_shader_rect(node)
+            elif node.type == "pen":
+                self.draw_water(node)
+            elif node.type in {"sprite", "platform"}:
                 source = self.vm.heap.get(node.handle).properties
-                x, y, w, h = (float(source[name]) for name in ("x", "y", "width", "height"))
-                self.canvas.create_rectangle(x, y, x + w, y + h, fill=str(source.get("color", "#ffffff")), outline="")
-            if node.type == "text":
-                self.canvas.create_text(float(node.properties["x"]), float(node.properties["y"]), anchor="nw", text=str(node.properties["text"]), fill=str(node.properties.get("color", "#ffffff")), font=("Arial", 16))
+                x = float(source["x"]) - self.camera_x
+                y, w, h = (float(source[name]) for name in ("y", "width", "height"))
+                if x + w < -80 or x > WIDTH + 80:
+                    continue
+                fill = str(source.get("color", "#ffffff"))
+                if "player" in str(source.get("class", "")):
+                    self.canvas.create_oval(x + 10, y, x + w - 10, y + 24, fill="#fde68a", outline="")
+                    self.canvas.create_rectangle(x + 10, y + 22, x + w - 10, y + h - 8, fill="#38bdf8", outline="")
+                    self.canvas.create_rectangle(x + 14, y + h - 8, x + 24, y + h, fill="#0f172a", outline="")
+                    self.canvas.create_rectangle(x + w - 24, y + h - 8, x + w - 14, y + h, fill="#0f172a", outline="")
+                else:
+                    self.canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline="")
+            elif node.type == "text":
+                self.canvas.create_text(float(node.properties["x"]), float(node.properties["y"]), anchor="nw", text=str(node.properties["text"]), fill=str(node.properties.get("color", "#ffffff")), font=("Arial", int(node.properties.get("font_size", 16)), "bold"))
         gx, gy, gw, gh = (float(self.goal.properties[name]) for name in ("x", "y", "width", "height"))
         if self.overlaps(self.player.x, self.player.y, self.player.width, self.player.height, gx, gy, gw, gh):
-            self.canvas.create_text(WIDTH / 2, 120, text="You reached the goal!", fill="#facc15", font=("Arial", 34, "bold"))
+            self.canvas.create_text(WIDTH / 2, 120, text="You reached the hologram gate!", fill="#facc15", font=("Arial", 34, "bold"))
 
 
 if __name__ == "__main__":
