@@ -23,6 +23,11 @@ class Node:
     variables: dict[str, Any] = field(default_factory=dict)
     components: list[Component] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    animations: dict[str, Any] = field(default_factory=dict)
+    states: dict[str, Any] = field(default_factory=dict)
+    classes: set[str] = field(default_factory=set)
+    tags: set[str] = field(default_factory=set)
+    dirty: bool = True
     events: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
 
@@ -31,6 +36,7 @@ class DomHeap:
         self._next: NodeHandle = 1
         self._nodes: dict[NodeHandle, Node] = {}
         self._ids: dict[str, NodeHandle] = {}
+        self.dirty_nodes: set[NodeHandle] = set()
 
     def create_node(self, node_type: str, node_id: str | None = None, metadata: dict[str, Any] | None = None) -> NodeHandle:
         handle = self._next
@@ -39,6 +45,7 @@ class DomHeap:
         if resolved_id in self._ids:
             raise ValueError(f"duplicate node id: {resolved_id}")
         self._nodes[handle] = Node(handle=handle, id=resolved_id, type=node_type, metadata=metadata or {})
+        self.dirty_nodes.add(handle)
         self._ids[resolved_id] = handle
         return handle
 
@@ -66,6 +73,9 @@ class DomHeap:
         if child_node.parent is not None and child in self.get(child_node.parent).children:
             self.get(child_node.parent).children.remove(child)
         child_node.parent = parent
+        child_node.dirty = True
+        parent_node.dirty = True
+        self.dirty_nodes.update({parent, child})
         if child not in parent_node.children:
             parent_node.children.append(child)
 
@@ -74,6 +84,9 @@ class DomHeap:
         if child in parent_node.children:
             parent_node.children.remove(child)
             self.get(child).parent = None
+            parent_node.dirty = True
+            self.get(child).dirty = True
+            self.dirty_nodes.update({parent, child})
 
     def all(self) -> list[Node]:
         return list(self._nodes.values())

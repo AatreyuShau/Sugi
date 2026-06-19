@@ -66,3 +66,16 @@ def test_protocol_is_transport_independent():
     assert server.handle({"id": 2, "command": "set_property", "node": node, "property": "text", "value": "Save"})["success"]
     response = server.handle({"id": 3, "command": "get_node", "node": node})
     assert response["result"]["properties"]["text"] == "Save"
+
+
+def test_json_compiled_scene_and_runtime_visual_state():
+    source = '{"page":{"id":"main","children":[{"type":"sprite","id":"hero","classes":["actor","selected"],"tags":["player"],"image":"assets/hero.png","animations":{"hover":{"scale":{"from":1,"to":1.1}}},"states":{"visible":true},"components":[{"type":"ShaderSprite","shader":"hologram","uniforms":{"strength":0.7}}]}]}}'
+    compiled = Compiler().compile_scene(source, source_format="json")
+    assert compiled.node_count == 2
+    vm = SugiVM()
+    vm.execute(compiled.program)
+    hero = vm.query(".selected")[0]
+    assert vm.heap.get(hero).properties["source"] == "assets/hero.png"
+    assert vm.heap.get(hero).states["visible"] is True
+    vm.play_animation(hero, "hover")
+    assert vm.heap.get(hero).variables["active_animation"]["name"] == "hover"

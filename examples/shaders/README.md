@@ -1,0 +1,3 @@
+# SUGI shaders example
+
+This example uses the shared SUGI scene/runtime contract: application code mutates state and SUGI owns visuals.
