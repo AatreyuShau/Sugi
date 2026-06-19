@@ -10,7 +10,7 @@ SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine protot
 - `examples/` - source-language examples, including a shared SUGI platformer scene with web and native frontends.
 - `tests/` - subsystem and vertical-slice tests.
 - `tools/` - developer tooling.
-- `docs/` - architecture notes and diagrams.
+- `docs/` - architecture notes, rendering capabilities, and diagrams.
 
 ## Current vertical slice
 
@@ -26,5 +26,5 @@ See `examples/platformer/README.md` for a shared SUGI scene that can be exported
 
 Additional demos:
 
-- `examples/tunnel_runner_3d/README.md` shows a pseudo-3D canvas game driven by exported SUGI scene data.
+- `examples/portfolio_template/README.md` shows a polished canvas portfolio with scroll lock, mouse trails, pen layers, full-frame shaders, and shader/image sprites.
 - `examples/login_canvas/README.md` shows a canvas-only browser login where Python owns interactions and rendering state.
