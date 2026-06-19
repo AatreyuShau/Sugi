@@ -5,8 +5,9 @@ SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine protot
 ## Repository layout
 
 - `sugi/` - initial working Python implementation of the compiler, bytecode, VM, protocol dispatcher, DOM heap, and render tree builder.
-- `compiler/`, `runtime/`, `renderer/`, `protocol/` - subsystem boundaries for future adapters and implementations.
-- `sdk/` - generated thin protocol wrappers will live here.
+- `compiler/`, `runtime/`, `renderer/`, `protocol/` - subsystem boundaries with importable production slices for parsers, ASTs, validators, render commands, backend adapters, GPU resources, particles, textures, and protocol wrappers.
+- `sdk/` - generated thin protocol wrappers for Python, Rust, Go, C#, Java, and JavaScript; SDKs never duplicate runtime logic.
+- `assets/` - backend-independent manifests for images, shaders, and fonts.
 - `examples/` - source-language examples, including a shared SUGI platformer scene with web and native frontends.
 - `tests/` - subsystem and vertical-slice tests.
 - `tools/` - developer tooling.
@@ -14,7 +15,7 @@ SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine protot
 
 ## Current vertical slice
 
-The project can compile a SUGI YAML page into binary `.sbc` bytecode, execute it inside the VM, mutate/query the DOM heap through protocol messages, dispatch browser-style events, generate backend-independent render trees, and render full frames from scene state via `SceneRenderer.render(vm)`.
+The project can compile SUGI YAML or JSON pages into binary `.sbc` bytecode or a `CompiledScene` artifact, execute it inside the VM, mutate/query the DOM heap through protocol messages, dispatch browser-style events, generate backend-independent render trees, and render full frames from scene state via `SceneRenderer.render(vm)`.
 
 ```bash
 pytest -q
