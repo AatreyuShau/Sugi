@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI Canvas Login</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; background: #020617; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<script>
+const canvas = document.getElementById('surface');
+const ctx = canvas.getContext('2d');
+let frame = { width: 720, height: 480, commands: [] };
+
+function resize() {
+  canvas.width = Math.floor(innerWidth * devicePixelRatio);
+  canvas.height = Math.floor(innerHeight * devicePixelRatio);
+}
+
+function toScenePoint(event) {
+  const scale = Math.min(canvas.width / frame.width, canvas.height / frame.height);
+  const ox = (canvas.width - frame.width * scale) / 2;
+  const oy = (canvas.height - frame.height * scale) / 2;
+  return { x: (event.clientX * devicePixelRatio - ox) / scale, y: (event.clientY * devicePixelRatio - oy) / scale };
+}
+
+async function send(event) {
+  await fetch('/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(event) });
+  await pull();
+}
+
+async function pull() {
+  frame = await fetch('/frame').then(response => response.json());
+  draw();
+}
+
+function draw() {
+  const scale = Math.min(canvas.width / frame.width, canvas.height / frame.height);
+  const ox = (canvas.width - frame.width * scale) / 2;
+  const oy = (canvas.height - frame.height * scale) / 2;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#020617';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(scale, 0, 0, scale, ox, oy);
+  for (const command of frame.commands) {
+    if (command.kind === 'rect') {
+      ctx.fillStyle = command.fill;
+      ctx.strokeStyle = command.stroke || command.fill;
+      ctx.lineWidth = command.lineWidth || 1;
+      ctx.beginPath();
+      ctx.roundRect(command.x, command.y, command.width, command.height, command.radius || 0);
+      ctx.fill();
+      if (command.stroke) ctx.stroke();
+    }
+    if (command.kind === 'text') {
+      ctx.fillStyle = command.fill;
+      ctx.font = `${command.weight || 400} ${command.size}px system-ui, sans-serif`;
+      ctx.textAlign = command.align || 'left';
+      ctx.fillText(command.text, command.x, command.y);
+    }
+  }
+}
+
+addEventListener('resize', () => { resize(); draw(); });
+canvas.addEventListener('mousedown', event => send({ type: 'click', ...toScenePoint(event) }));
+addEventListener('keydown', event => {
+  if (event.key.length === 1 || ['Backspace', 'Tab', 'Enter'].includes(event.key)) event.preventDefault();
+  send({ type: 'key', key: event.key });
+});
+resize();
+pull();
+setInterval(pull, 250);
+</script>
+</body>
+</html>

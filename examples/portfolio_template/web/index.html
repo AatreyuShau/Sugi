@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI Python Portfolio Template</title>
+  <style>
+    html, body { margin: 0; min-height: 4200px; background: #050816; overflow-x: hidden; }
+    canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+    .hint { position: fixed; left: 24px; bottom: 20px; color: #cbd5e1; font: 14px system-ui; opacity: .78; pointer-events: none; }
+  </style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<div class="hint">Python owns SUGI DOM + rendering decisions · browser relays viewport/mouse/scroll</div>
+<script>
+const canvas = document.getElementById('surface');
+const ctx = canvas.getContext('2d');
+let latest = { width: 1, height: 1, pageHeight: 4200, commands: [] };
+let pendingRelay = false;
+
+function resize() {
+  canvas.width = Math.floor(innerWidth * devicePixelRatio);
+  canvas.height = Math.floor(innerHeight * devicePixelRatio);
+  relay({ type: 'viewport', width: canvas.width, height: canvas.height, scrollY: scrollY * devicePixelRatio });
+}
+
+async function relay(payload) {
+  await fetch('/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+}
+
+function relayViewportSoon() {
+  if (pendingRelay) return;
+  pendingRelay = true;
+  requestAnimationFrame(() => {
+    pendingRelay = false;
+    relay({ type: 'viewport', width: canvas.width, height: canvas.height, scrollY: scrollY * devicePixelRatio });
+  });
+}
+
+function shaderFill(command) {
+  const phase = command.phase || 0;
+  if (command.shader === 'aurora') {
+    const g = ctx.createRadialGradient(command.x + command.width * (0.35 + Math.sin(phase) * 0.1), command.y + command.height * 0.25, 20, command.x + command.width * 0.5, command.y + command.height * 0.4, command.width * 0.75);
+    g.addColorStop(0, 'rgba(34,211,238,.72)');
+    g.addColorStop(.42, 'rgba(139,92,246,.46)');
+    g.addColorStop(1, 'rgba(244,114,182,0)');
+    return g;
+  }
+  if (command.shader === 'grid_warp') {
+    const g = ctx.createLinearGradient(command.x, command.y, command.x + command.width, command.y + command.height);
+    g.addColorStop(0, 'rgba(14,165,233,.4)');
+    g.addColorStop(.5, 'rgba(99,102,241,.24)');
+    g.addColorStop(1, 'rgba(236,72,153,.34)');
+    return g;
+  }
+  const g = ctx.createLinearGradient(command.x, command.y, command.x + command.width, command.y + command.height);
+  g.addColorStop(0, '#8b5cf6');
+  g.addColorStop(1, '#22d3ee');
+  return g;
+}
+
+function drawWrappedText(command) {
+  ctx.globalAlpha = command.alpha ?? 1;
+  ctx.fillStyle = command.fill;
+  ctx.font = `${command.weight || 500} ${command.size || 20}px system-ui, sans-serif`;
+  const words = String(command.text).split(' ');
+  let line = '';
+  let y = command.y;
+  for (const word of words) {
+    const test = `${line}${word} `;
+    if (ctx.measureText(test).width > (command.maxWidth || 900) && line) {
+      ctx.fillText(line, command.x, y);
+      line = `${word} `;
+      y += (command.size || 20) * 1.25;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, command.x, y);
+  ctx.globalAlpha = 1;
+}
+
+function drawCommand(command) {
+  if (command.kind === 'rect') {
+    ctx.fillStyle = command.fill;
+    ctx.fillRect(command.x, command.y, command.width, command.height);
+  }
+  if (command.kind === 'round_rect' || command.kind === 'shader_round_rect') {
+    ctx.beginPath();
+    ctx.roundRect(command.x, command.y, command.width, command.height, command.radius || 0);
+    ctx.fillStyle = command.kind === 'shader_round_rect' ? shaderFill(command) : command.fill;
+    ctx.fill();
+    if (command.stroke) {
+      ctx.strokeStyle = command.stroke;
+      ctx.lineWidth = command.lineWidth || 1;
+      ctx.stroke();
+    }
+  }
+  if (command.kind === 'shader_rect') {
+    ctx.fillStyle = shaderFill(command);
+    ctx.fillRect(command.x, command.y, command.width, command.height);
+  }
+  if (command.kind === 'line') {
+    ctx.lineCap = command.cap || 'butt';
+    ctx.strokeStyle = command.stroke;
+    ctx.lineWidth = command.width || 1;
+    ctx.beginPath();
+    ctx.moveTo(command.x1, command.y1);
+    ctx.lineTo(command.x2, command.y2);
+    ctx.stroke();
+  }
+  if (command.kind === 'polyline') {
+    ctx.lineCap = command.cap || 'round';
+    ctx.strokeStyle = command.stroke;
+    ctx.lineWidth = command.width || 1;
+    ctx.beginPath();
+    command.points.forEach((point, index) => index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y));
+    ctx.stroke();
+  }
+  if (command.kind === 'text') {
+    ctx.fillStyle = command.fill;
+    ctx.font = `${command.weight || 500} ${command.size || 20}px system-ui, sans-serif`;
+    ctx.fillText(command.text, command.x, command.y);
+  }
+  if (command.kind === 'wrapped_text') drawWrappedText(command);
+}
+
+async function pullFrame() {
+  latest = await fetch('/frame').then(response => response.json());
+  document.body.style.minHeight = `${Math.max(innerHeight, latest.pageHeight / devicePixelRatio)}px`;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const scale = latest.commands[0]?.scale || 1;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  latest.commands.forEach(drawCommand);
+  requestAnimationFrame(pullFrame);
+}
+
+addEventListener('resize', resize);
+addEventListener('scroll', relayViewportSoon, { passive: true });
+addEventListener('mousemove', event => relay({ type: 'mouse', x: event.clientX * devicePixelRatio, y: event.clientY * devicePixelRatio }), { passive: true });
+resize();
+pullFrame();
+</script>
+</body>
+</html>
