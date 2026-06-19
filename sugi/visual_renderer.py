@@ -104,15 +104,15 @@ class SceneRenderer:
         my = float(root.variables.get("mouse_y", -99999)) / max(scale, 0.001) if root else -99999
         hover = math.hypot(mx - (x + w / 2), my - (y + h / 2)) < float(p.get("hover_radius", 260))
         lift = -float(p.get("hover_lift", 18)) if hover else 0
-        command = {"kind": "shader_round_rect" if p.get("shader") else "round_rect", "shader": p.get("shader"), "x": x, "y": y + lift, "width": w, "height": h, "radius": p.get("radius", 28), "phase": now + x * 0.003, "fill": p.get("color", "#8b5cf6"), "stroke": "rgba(255,255,255,.75)" if hover else p.get("stroke", "rgba(255,255,255,.22)"), "lineWidth": 3 if hover else 1}
+        command = {"kind": "shader_round_rect" if (p.get("material") or p.get("shader")) else "round_rect", "material": p.get("material"), "shader": p.get("shader"), "x": x, "y": y + lift, "width": w, "height": h, "radius": p.get("radius", 28), "phase": now + x * 0.003, "fill": p.get("color", "#8b5cf6"), "stroke": "rgba(255,255,255,.75)" if hover else p.get("stroke", "rgba(255,255,255,.22)"), "lineWidth": 3 if hover else 1}
         commands.append(command)
         if p.get("label", node.id):
             commands.append({"kind": "text", "x": x + 28, "y": y + lift + h - 42, "text": str(p.get("label", node.id.replace("_", " "))), "fill": p.get("text_color", "rgba(255,255,255,.88)"), "size": p.get("font_size", 24), "weight": 700})
 
     def _shader_surface(self, node: Node, y: float, commands: list[dict[str, Any]], now: float) -> None:
         p = node.properties
-        commands.append({"kind": "shader_rect", "shader": p.get("shader", "glow"), "x": p.get("x", 0), "y": y, "width": p.get("width", 0), "height": p.get("height", 0), "strength": p.get("strength", 1), "phase": now})
-        if p.get("shader") in {"grid_warp", "crt"}:
+        commands.append({"kind": "shader_rect", "material": p.get("material"), "shader": p.get("shader"), "x": p.get("x", 0), "y": y, "width": p.get("width", 0), "height": p.get("height", 0), "strength": p.get("strength", 1), "phase": now})
+        if p.get("material") or p.get("shader") in {"grid_warp", "crt"}:
             for x in range(int(p.get("x", 0)) + 20, int(float(p.get("x", 0)) + float(p.get("width", 0))), 54):
                 commands.append({"kind": "line", "x1": x + math.sin(now + x * 0.01) * 18, "y1": y + 40, "x2": x + math.cos(now + x * 0.02) * 24, "y2": y + float(p.get("height", 0)) - 40, "stroke": "rgba(255,255,255,.12)", "width": 1})
 

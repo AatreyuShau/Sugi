@@ -1,3 +1,25 @@
+materials:
+  sky:
+    vertex: assets/shaders/screen.vert
+    fragment: assets/shaders/sky.frag
+    uniforms:
+      time: 0
+  clouds:
+    vertex: assets/shaders/screen.vert
+    fragment: assets/shaders/clouds.frag
+    uniforms:
+      time: 0
+  water:
+    vertex: assets/shaders/screen.vert
+    fragment: assets/shaders/water.frag
+    uniforms:
+      time: 0
+      amplitude: 0.18
+  hologram:
+    vertex: assets/shaders/screen.vert
+    fragment: assets/shaders/hologram.frag
+    uniforms:
+      strength: 0.45
 page:
   id: platformer_scene
   styles:
@@ -13,7 +35,7 @@ page:
   children:
     - type: shader_surface
       id: shader_sky
-      shader: aurora
+      material: sky
       x: 0
       y: 0
       width: 2600
@@ -23,12 +45,12 @@ page:
       parallax: 0.18
       components:
         - type: FullFrameShader
-          shader: aurora
+          material: sky
         - type: Camera
           parallax: 0.18
     - type: shader_surface
       id: distant_clouds
-      shader: gradient_noise
+      material: clouds
       x: 0
       y: 48
       width: 2600
@@ -38,7 +60,7 @@ page:
       parallax: 0.35
       components:
         - type: PostProcessShader
-          shader: gradient_noise
+          material: clouds
     - type: camera
       id: camera
       x: 0
@@ -53,6 +75,23 @@ page:
           target: player
           follow_axis: x
           zoom: 1
+    - type: shader_surface
+      id: water_backdrop
+      material: water
+      x: 0
+      y: 430
+      width: 2600
+      height: 110
+      color: "#075985"
+      parallax: 1
+      components:
+        - type: ShaderMaterial
+          material: water
+          vertex: assets/shaders/screen.vert
+          fragment: assets/shaders/water.frag
+          uniforms:
+            time: 0
+            amplitude: 0.18
     - type: pen
       id: sine_water
       x: 0
@@ -108,8 +147,10 @@ page:
       height: 88
       color: "#facc15"
       components:
-        - type: ShaderSprite
-          shader: hologram
+        - type: ShaderMaterial
+          material: hologram
+          vertex: assets/shaders/screen.vert
+          fragment: assets/shaders/hologram.frag
           uniforms:
             strength: 0.45
         - type: Goal

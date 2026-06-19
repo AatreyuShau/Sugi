@@ -46,6 +46,8 @@ class ProtocolServer:
             return self.vm.set_property(message["node"], message["property"], message.get("value"))
         if command == "set_variable":
             return self.vm.set_variable(message["node"], message["variable"], message.get("value"))
+        if command == "set_uniform":
+            return self.vm.set_uniform(message["node"], message["uniform"], message.get("value"))
         if command == "append_child":
             return self.vm.heap.append_child(message["parent"], message["child"])
         if command == "remove_child":

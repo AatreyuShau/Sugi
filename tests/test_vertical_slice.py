@@ -79,3 +79,25 @@ def test_json_compiled_scene_and_runtime_visual_state():
     assert vm.heap.get(hero).states["visible"] is True
     vm.play_animation(hero, "hover")
     assert vm.heap.get(hero).variables["active_animation"]["name"] == "hover"
+
+
+def test_vm_set_uniform_updates_shader_material_component():
+    source = """
+page:
+  id: root
+  children:
+    - type: sprite
+      id: water
+      components:
+        - type: ShaderMaterial
+          vertex: assets/shaders/screen.vert
+          fragment: assets/shaders/water.frag
+          uniforms:
+            speed: 0.3
+"""
+    vm = SugiVM()
+    vm.execute(Compiler().compile_yaml(source))
+    water = vm.query("#water")[0]
+    vm.set_uniform(water, "speed", 0.8)
+    component = vm.heap.get(water).components[0]
+    assert component.values["uniforms"]["speed"] == 0.8

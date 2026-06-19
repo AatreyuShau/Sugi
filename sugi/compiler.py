@@ -8,6 +8,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when PyYAML is unava
     yaml = None
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
+from .assets import MaterialResource
 from .scene import CompiledScene
 
 _RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations", "states", "classes", "tags"}
@@ -27,9 +28,11 @@ class Compiler:
         return self.compile_mapping(ast)
 
     def compile_scene(self, source: str, source_format: str = "yaml") -> CompiledScene:
-        program = self.compile_json(source) if source_format == "json" else self.compile_yaml(source)
+        ast = json.loads(source) if source_format == "json" else (yaml.safe_load(source) if yaml is not None else _simple_yaml_load(source))
+        program = self.compile_mapping(ast)
         node_count = sum(1 for instruction in program.instructions if instruction.opcode == OpCode.CREATE_NODE)
-        return CompiledScene(program=program, node_count=node_count, source_format=source_format)
+        materials = self._parse_materials(ast.get("materials", {}) if isinstance(ast, dict) else {})
+        return CompiledScene(program=program, node_count=node_count, source_format=source_format, materials=materials)
 
     def compile_mapping(self, ast: dict[str, Any]) -> BytecodeProgram:
         if not isinstance(ast, dict) or "page" not in ast:
@@ -37,6 +40,14 @@ class Compiler:
         instructions: list[Instruction] = []
         self._emit_node(ast["page"], None, instructions, default_type="page")
         return BytecodeProgram(tuple(instructions))
+
+    def _parse_materials(self, specs: dict[str, Any]) -> dict[str, MaterialResource]:
+        materials: dict[str, MaterialResource] = {}
+        for name, spec in (specs or {}).items():
+            if not isinstance(spec, dict) or not spec.get("vertex") or not spec.get("fragment"):
+                raise ValueError(f"material {name!r} requires vertex and fragment shader paths")
+            materials[name] = MaterialResource(name=name, vertex=spec["vertex"], fragment=spec["fragment"], uniforms=dict(spec.get("uniforms") or {}))
+        return materials
 
     def _emit_node(self, spec: dict[str, Any], parent_id: str | None, out: list[Instruction], default_type: str | None = None) -> None:
         if not isinstance(spec, dict):

@@ -10,7 +10,7 @@ Every demo follows the core SUGI rule: application code owns logic and mutates V
 | Tunnel runner 3D | `tunnel_runner_3d/scene.yaml` | `tunnel_runner_3d/index.html` | shared render tree | shader/postprocess-style tunnel visuals |
 | UI demo | `ui_demo/scene.yaml` | `ui_demo/web/index.html` | `ui_demo/native/ui_demo_native.py` | layout, buttons, text, events, animations, scroll regions |
 | Particles | `particles/scene.yaml` | `particles/web/index.html` | `particles/native/particles_native.py` | particle emitters, wind/gravity/lifetime parameters, pen layers |
-| Shaders | `shaders/scene.yaml` | `shaders/web/index.html` | `shaders/native/shaders_native.py` | built-in shaders, custom GLSL references, postprocess, render targets, uniforms |
+| Shaders | `shaders/scene.yaml` | `shaders/web/index.html` | `shaders/native/shaders_native.py` | application GLSL materials, postprocess, render targets, uniforms |
 | Image gallery | `image_gallery/scene.yaml` | `image_gallery/web/index.html` | `image_gallery/native/image_gallery_native.py` | cached images, SVG/PNG/JPEG/WEBP references, UVs, nine-slice, blend modes |
 | Dashboard | `dashboard/scene.yaml` | `dashboard/web/index.html` | `dashboard/native/dashboard_native.py` | protocol subscriptions, dashboard state, camera, grid layout, components |
 

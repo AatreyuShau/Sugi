@@ -17,23 +17,23 @@
         "type": "shader_surface",
         "id": "shader_sky",
         "properties": {
-          "shader": "aurora",
+          "material": "sky",
           "x": 0,
           "y": 0,
           "width": 2600,
           "height": 360,
           "color": "#0ea5e9",
-          "strength": 0.78,
-          "parallax": 0.18
+          "strength": "0.78",
+          "parallax": "0.18"
         },
         "components": [
           {
             "type": "FullFrameShader",
-            "shader": "aurora"
+            "material": "sky"
           },
           {
             "type": "Camera",
-            "parallax": 0.18
+            "parallax": "0.18"
           }
         ],
         "children": []
@@ -43,19 +43,19 @@
         "type": "shader_surface",
         "id": "distant_clouds",
         "properties": {
-          "shader": "gradient_noise",
+          "material": "clouds",
           "x": 0,
           "y": 48,
           "width": 2600,
           "height": 210,
           "color": "#8b5cf6",
-          "strength": 0.4,
-          "parallax": 0.35
+          "strength": "0.4",
+          "parallax": "0.35"
         },
         "components": [
           {
             "type": "PostProcessShader",
-            "shader": "gradient_noise"
+            "material": "clouds"
           }
         ],
         "children": []
@@ -87,6 +87,33 @@
       },
       {
         "handle": 5,
+        "type": "shader_surface",
+        "id": "water_backdrop",
+        "properties": {
+          "material": "water",
+          "x": 0,
+          "y": 430,
+          "width": 2600,
+          "height": 110,
+          "color": "#075985",
+          "parallax": 1
+        },
+        "components": [
+          {
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "uniforms": {
+              "time": 0,
+              "amplitude": "0.18"
+            }
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
         "type": "pen",
         "id": "sine_water",
         "properties": {
@@ -112,7 +139,7 @@
         "children": []
       },
       {
-        "handle": 6,
+        "handle": 7,
         "type": "sprite",
         "id": "player",
         "properties": {
@@ -128,7 +155,7 @@
             "run": {
               "scale": {
                 "from": 1,
-                "to": 1.06
+                "to": "1.06"
               }
             }
           }
@@ -154,7 +181,7 @@
         "children": []
       },
       {
-        "handle": 7,
+        "handle": 8,
         "type": "sprite",
         "id": "goal",
         "properties": {
@@ -167,10 +194,12 @@
         },
         "components": [
           {
-            "type": "ShaderSprite",
-            "shader": "hologram",
+            "type": "ShaderMaterial",
+            "material": "hologram",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/hologram.frag",
             "uniforms": {
-              "strength": 0.45
+              "strength": "0.45"
             }
           },
           {
@@ -180,7 +209,7 @@
         "children": []
       },
       {
-        "handle": 8,
+        "handle": 9,
         "type": "platform",
         "id": "ground",
         "properties": {
@@ -200,7 +229,7 @@
         "children": []
       },
       {
-        "handle": 9,
+        "handle": 10,
         "type": "platform",
         "id": "ledge_left",
         "properties": {
@@ -220,7 +249,7 @@
         "children": []
       },
       {
-        "handle": 10,
+        "handle": 11,
         "type": "platform",
         "id": "ledge_mid",
         "properties": {
@@ -240,7 +269,7 @@
         "children": []
       },
       {
-        "handle": 11,
+        "handle": 12,
         "type": "platform",
         "id": "ledge_ridge",
         "properties": {
@@ -260,7 +289,7 @@
         "children": []
       },
       {
-        "handle": 12,
+        "handle": 13,
         "type": "platform",
         "id": "ledge_goal",
         "properties": {
@@ -280,7 +309,7 @@
         "children": []
       },
       {
-        "handle": 13,
+        "handle": 14,
         "type": "text",
         "id": "instructions",
         "properties": {

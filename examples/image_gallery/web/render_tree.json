@@ -64,12 +64,7 @@
           {
             "type": "ImageSprite",
             "source": "assets/panel.webp",
-            "nine_slice": [
-              24,
-              24,
-              24,
-              24
-            ],
+            "nine_slice": "[24, 24, 24, 24]",
             "color_overlay": "rgba(168,85,247,.32)"
           }
         ],
@@ -92,12 +87,7 @@
           {
             "type": "Sprite",
             "texture": "assets/atlas.svg",
-            "uv_region": [
-              0,
-              0,
-              0.5,
-              0.5
-            ],
+            "uv_region": "[0, 0, 0.5, 0.5]",
             "blend_mode": "screen"
           }
         ],
@@ -116,12 +106,11 @@
         },
         "components": [
           {
-            "type": "ShaderSprite",
-            "shader": "liquid_glass",
-            "textures": [
-              "assets/albedo.jpg",
-              "assets/normal.webp"
-            ]
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "textures": "[assets/albedo.jpg, assets/normal.webp]"
           }
         ],
         "children": []

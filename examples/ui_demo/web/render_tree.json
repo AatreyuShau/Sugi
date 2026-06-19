@@ -29,8 +29,8 @@
             "weight": 800,
             "alignment": "left",
             "wrapping": true,
-            "tracking": 0.3,
-            "line_height": 1.2,
+            "tracking": "0.3",
+            "line_height": "1.2",
             "drop_shadow": true
           }
         ],
@@ -54,11 +54,11 @@
         "components": [
           {
             "type": "Transform",
-            "opacity": 0.96
+            "opacity": "0.96"
           },
           {
             "type": "Glow",
-            "strength": 0.35
+            "strength": "0.35"
           }
         ],
         "children": [
@@ -97,7 +97,7 @@
                 "hover": {
                   "scale": {
                     "from": 1,
-                    "to": 1.08
+                    "to": "1.08"
                   }
                 }
               }

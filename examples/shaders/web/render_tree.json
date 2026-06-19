@@ -15,7 +15,7 @@
         "type": "text",
         "id": "title",
         "properties": {
-          "text": "Built-in shaders, custom shaders, postprocess",
+          "text": "Application GLSL materials, uniforms, render targets",
           "x": 48,
           "y": 68,
           "color": "#f8fafc",
@@ -27,20 +27,24 @@
       {
         "handle": 3,
         "type": "shader_surface",
-        "id": "aurora_pass",
+        "id": "sky_material_pass",
         "properties": {
-          "shader": "aurora",
+          "material": "sky",
           "x": 48,
           "y": 120,
           "width": 360,
           "height": 220,
-          "color": "#22d3ee",
-          "strength": 0.8
+          "color": "#22d3ee"
         },
         "components": [
           {
-            "type": "FullFrameShader",
-            "shader": "aurora"
+            "type": "ShaderMaterial",
+            "material": "sky",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/sky.frag",
+            "uniforms": {
+              "time": 0
+            }
           }
         ],
         "children": []
@@ -50,7 +54,7 @@
         "type": "sprite",
         "id": "hologram_sprite",
         "properties": {
-          "shader": "hologram",
+          "material": "hologram",
           "x": 460,
           "y": 120,
           "width": 360,
@@ -60,11 +64,12 @@
         },
         "components": [
           {
-            "type": "ShaderSprite",
-            "shader": "hologram",
+            "type": "ShaderMaterial",
+            "material": "hologram",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/hologram.frag",
             "uniforms": {
-              "strength": 0.7,
-              "speed": 0.2
+              "strength": "0.7"
             }
           }
         ],
@@ -73,9 +78,9 @@
       {
         "handle": 5,
         "type": "shader_surface",
-        "id": "custom_water",
+        "id": "water_material_pass",
         "properties": {
-          "shader": "assets/water.glsl",
+          "material": "water",
           "x": 872,
           "y": 120,
           "width": 360,
@@ -84,24 +89,31 @@
         },
         "components": [
           {
-            "type": "PostProcessShader",
-            "shader": "assets/water.glsl",
-            "render_target": "pooled"
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "uniforms": {
+              "time": 0,
+              "amplitude": "0.2"
+            }
           }
         ],
         "children": []
       },
       {
         "handle": 6,
-        "type": "panel",
-        "id": "render_pipeline",
+        "type": "viewport",
+        "id": "postprocess_viewport",
         "properties": {
           "x": 48,
           "y": 390,
           "width": 1184,
           "height": 160,
           "color": "#0f172a",
-          "radius": 26
+          "postprocess": {
+            "fragment": "assets/shaders/bloom.frag"
+          }
         },
         "components": [
           {
@@ -109,8 +121,10 @@
             "pool": "shared"
           },
           {
-            "type": "UniformBlock",
-            "cache": true
+            "type": "ShaderMaterial",
+            "material": "bloom",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/bloom.frag"
           }
         ],
         "children": []

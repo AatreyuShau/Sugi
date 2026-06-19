@@ -1,3 +1,7 @@
+materials:
+  water:
+    vertex: assets/shaders/screen.vert
+    fragment: assets/shaders/water.frag
 page:
   id: gallery_showcase
   width: 1280
@@ -58,6 +62,8 @@ page:
       height: 340
       color: "#7f1d1d"
       components:
-        - type: ShaderSprite
-          shader: liquid_glass
+        - type: ShaderMaterial
+          material: water
+          vertex: assets/shaders/screen.vert
+          fragment: assets/shaders/water.frag
           textures: [assets/albedo.jpg, assets/normal.webp]

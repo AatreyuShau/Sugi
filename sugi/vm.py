@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any, Callable
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
+from .scene import CompiledScene
 from .dom import Component, DomHeap, NodeHandle
 
 Watcher = Callable[[dict[str, Any]], None]
@@ -14,11 +15,16 @@ class SugiVM:
         self.heap = DomHeap()
         self._watchers: dict[NodeHandle, list[Watcher]] = defaultdict(list)
         self._mounted: dict[str, NodeHandle] = {}
+        self.materials = {}
         self._subscriptions: dict[str, set[NodeHandle]] = defaultdict(set)
 
     def execute(self, program: BytecodeProgram) -> None:
         for instruction in program.instructions:
             self.execute_instruction(instruction)
+
+    def execute_scene(self, scene: CompiledScene) -> None:
+        self.materials.update(scene.materials)
+        self.execute(scene.program)
 
     def execute_instruction(self, instruction: Instruction) -> Any:
         p = instruction.payload
@@ -71,6 +77,19 @@ class SugiVM:
         target.dirty = True
         self.heap.dirty_nodes.add(node)
         self._notify({"event": "property_changed", "node": node, "property": name, "value": value})
+
+    def set_uniform(self, node: NodeHandle, name: str, value: Any) -> None:
+        target = self.heap.get(node)
+        for component in target.components:
+            if component.type == "ShaderMaterial":
+                uniforms = component.values.setdefault("uniforms", {})
+                uniforms[name] = value
+                break
+        else:
+            target.properties[f"uniform.{name}"] = value
+        target.dirty = True
+        self.heap.dirty_nodes.add(node)
+        self._notify({"event": "uniform_changed", "node": node, "uniform": name, "value": value})
 
     def set_variable(self, node: NodeHandle, name: str, value: Any) -> None:
         target = self.heap.get(node)

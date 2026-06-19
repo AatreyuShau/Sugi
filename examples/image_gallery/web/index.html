@@ -79,12 +79,7 @@
           {
             "type": "ImageSprite",
             "source": "assets/panel.webp",
-            "nine_slice": [
-              24,
-              24,
-              24,
-              24
-            ],
+            "nine_slice": "[24, 24, 24, 24]",
             "color_overlay": "rgba(168,85,247,.32)"
           }
         ],
@@ -107,12 +102,7 @@
           {
             "type": "Sprite",
             "texture": "assets/atlas.svg",
-            "uv_region": [
-              0,
-              0,
-              0.5,
-              0.5
-            ],
+            "uv_region": "[0, 0, 0.5, 0.5]",
             "blend_mode": "screen"
           }
         ],
@@ -131,12 +121,11 @@
         },
         "components": [
           {
-            "type": "ShaderSprite",
-            "shader": "liquid_glass",
-            "textures": [
-              "assets/albedo.jpg",
-              "assets/normal.webp"
-            ]
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "textures": "[assets/albedo.jpg, assets/normal.webp]"
           }
         ],
         "children": []
@@ -151,7 +140,7 @@ let tree = [];
 function flatten(nodes, out = []) { for (const node of nodes) { out.push(node); flatten(node.children || [], out); } return out; }
 function resize(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
 function shaderFill(p){ const g = ctx.createLinearGradient(p.x, p.y, p.x + (p.width || 1), p.y + (p.height || 1)); g.addColorStop(0, p.color || '#22d3ee'); g.addColorStop(.5, '#8b5cf6'); g.addColorStop(1, '#f472b6'); return g; }
-function drawNode(node){ const p = node.properties || {}; const type = node.type; if (['page','viewport','container','section','panel','button','sprite','image','shader','shader_surface','particle_system','pen','camera','scroll_region'].includes(type)) { if (type !== 'page') { ctx.fillStyle = p.shader ? shaderFill(p) : (p.color || 'rgba(15,23,42,.72)'); const r = Number(p.radius || 16); ctx.beginPath(); ctx.roundRect(Number(p.x||0), Number(p.y||0), Number(p.width||0), Number(p.height||0), r); ctx.fill(); if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.stroke(); } } } if (type === 'text' || p.text || p.label) { ctx.fillStyle = p.text_color || p.color || '#f8fafc'; ctx.font = `${p.weight || 600} ${p.font_size || 22}px system-ui, sans-serif`; ctx.fillText(p.text || p.label || node.id, Number(p.x||24), Number(p.y||40)); } if (type === 'particle_system') { ctx.fillStyle = p.particle_color || '#bae6fd'; for (let i=0;i<80;i++){ ctx.globalAlpha=.25+(i%7)/12; ctx.beginPath(); ctx.arc(Number(p.x||0)+(i*47)%Number(p.width||400), Number(p.y||0)+(i*83)%Number(p.height||240), Number(p.size||2), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; } (node.children || []).forEach(drawNode); }
+function drawNode(node){ const p = node.properties || {}; const type = node.type; if (['page','viewport','container','section','panel','button','sprite','image','shader','shader_surface','particle_system','pen','camera','scroll_region'].includes(type)) { if (type !== 'page') { ctx.fillStyle = p.material ? shaderFill(p) : (p.color || 'rgba(15,23,42,.72)'); const r = Number(p.radius || 16); ctx.beginPath(); ctx.roundRect(Number(p.x||0), Number(p.y||0), Number(p.width||0), Number(p.height||0), r); ctx.fill(); if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.stroke(); } } } if (type === 'text' || p.text || p.label) { ctx.fillStyle = p.text_color || p.color || '#f8fafc'; ctx.font = `${p.weight || 600} ${p.font_size || 22}px system-ui, sans-serif`; ctx.fillText(p.text || p.label || node.id, Number(p.x||24), Number(p.y||40)); } if (type === 'particle_system') { ctx.fillStyle = p.particle_color || '#bae6fd'; for (let i=0;i<80;i++){ ctx.globalAlpha=.25+(i%7)/12; ctx.beginPath(); ctx.arc(Number(p.x||0)+(i*47)%Number(p.width||400), Number(p.y||0)+(i*83)%Number(p.height||240), Number(p.size||2), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; } (node.children || []).forEach(drawNode); }
 async function boot(){ resize(); const embedded = document.getElementById('render-tree-data')?.textContent; tree = embedded ? JSON.parse(embedded) : await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
 function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); const root = tree[0]?.properties || {}; const sx = canvas.width / Number(root.width || 1280), sy = canvas.height / Number(root.height || 720); ctx.setTransform(Math.min(sx,sy),0,0,Math.min(sx,sy),0,0); tree.forEach(drawNode); requestAnimationFrame(draw); }
 addEventListener('resize', resize); boot();

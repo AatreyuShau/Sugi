@@ -60,11 +60,11 @@
         "components": [
           {
             "type": "Transform",
-            "opacity": 0.94
+            "opacity": "0.94"
           },
           {
             "type": "Glow",
-            "strength": 0.28
+            "strength": "0.28"
           }
         ],
         "children": []

@@ -30,23 +30,23 @@
         "type": "shader_surface",
         "id": "shader_sky",
         "properties": {
-          "shader": "aurora",
+          "material": "sky",
           "x": 0,
           "y": 0,
           "width": 2600,
           "height": 360,
           "color": "#0ea5e9",
-          "strength": 0.78,
-          "parallax": 0.18
+          "strength": "0.78",
+          "parallax": "0.18"
         },
         "components": [
           {
             "type": "FullFrameShader",
-            "shader": "aurora"
+            "material": "sky"
           },
           {
             "type": "Camera",
-            "parallax": 0.18
+            "parallax": "0.18"
           }
         ],
         "children": []
@@ -56,19 +56,19 @@
         "type": "shader_surface",
         "id": "distant_clouds",
         "properties": {
-          "shader": "gradient_noise",
+          "material": "clouds",
           "x": 0,
           "y": 48,
           "width": 2600,
           "height": 210,
           "color": "#8b5cf6",
-          "strength": 0.4,
-          "parallax": 0.35
+          "strength": "0.4",
+          "parallax": "0.35"
         },
         "components": [
           {
             "type": "PostProcessShader",
-            "shader": "gradient_noise"
+            "material": "clouds"
           }
         ],
         "children": []
@@ -100,6 +100,33 @@
       },
       {
         "handle": 5,
+        "type": "shader_surface",
+        "id": "water_backdrop",
+        "properties": {
+          "material": "water",
+          "x": 0,
+          "y": 430,
+          "width": 2600,
+          "height": 110,
+          "color": "#075985",
+          "parallax": 1
+        },
+        "components": [
+          {
+            "type": "ShaderMaterial",
+            "material": "water",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/water.frag",
+            "uniforms": {
+              "time": 0,
+              "amplitude": "0.18"
+            }
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
         "type": "pen",
         "id": "sine_water",
         "properties": {
@@ -125,7 +152,7 @@
         "children": []
       },
       {
-        "handle": 6,
+        "handle": 7,
         "type": "sprite",
         "id": "player",
         "properties": {
@@ -141,7 +168,7 @@
             "run": {
               "scale": {
                 "from": 1,
-                "to": 1.06
+                "to": "1.06"
               }
             }
           }
@@ -167,7 +194,7 @@
         "children": []
       },
       {
-        "handle": 7,
+        "handle": 8,
         "type": "sprite",
         "id": "goal",
         "properties": {
@@ -180,10 +207,12 @@
         },
         "components": [
           {
-            "type": "ShaderSprite",
-            "shader": "hologram",
+            "type": "ShaderMaterial",
+            "material": "hologram",
+            "vertex": "assets/shaders/screen.vert",
+            "fragment": "assets/shaders/hologram.frag",
             "uniforms": {
-              "strength": 0.45
+              "strength": "0.45"
             }
           },
           {
@@ -193,7 +222,7 @@
         "children": []
       },
       {
-        "handle": 8,
+        "handle": 9,
         "type": "platform",
         "id": "ground",
         "properties": {
@@ -213,7 +242,7 @@
         "children": []
       },
       {
-        "handle": 9,
+        "handle": 10,
         "type": "platform",
         "id": "ledge_left",
         "properties": {
@@ -233,7 +262,7 @@
         "children": []
       },
       {
-        "handle": 10,
+        "handle": 11,
         "type": "platform",
         "id": "ledge_mid",
         "properties": {
@@ -253,7 +282,7 @@
         "children": []
       },
       {
-        "handle": 11,
+        "handle": 12,
         "type": "platform",
         "id": "ledge_ridge",
         "properties": {
@@ -273,7 +302,7 @@
         "children": []
       },
       {
-        "handle": 12,
+        "handle": 13,
         "type": "platform",
         "id": "ledge_goal",
         "properties": {
@@ -293,7 +322,7 @@
         "children": []
       },
       {
-        "handle": 13,
+        "handle": 14,
         "type": "text",
         "id": "instructions",
         "properties": {
@@ -339,7 +368,7 @@ function classes(node) { return String(node.properties.class || '').split(/\s+/)
 function imageFor(src) { if (!src) return null; if (!imageCache.has(src)) { const img = new Image(); img.src = `../../${src}`; imageCache.set(src, img); } return imageCache.get(src); }
 function shaderGradient(p, phase = 0) { const g = ctx.createLinearGradient(p.x - cameraX * Number(p.parallax ?? 1), 0, p.x + Number(p.width), Number(p.height)); g.addColorStop(0, '#0284c7'); g.addColorStop(.42 + Math.sin(phase) * .08, '#7c3aed'); g.addColorStop(1, '#fb7185'); return g; }
 function drawWater(p, phase) { const x0 = Number(p.x) - cameraX; const y = Number(p.y); const w = Number(p.width); ctx.fillStyle = 'rgba(7, 89, 133, .72)'; ctx.fillRect(x0, y + 18, w, Number(p.height)); ctx.lineCap = 'round'; for (let pass = 0; pass < 3; pass++) { ctx.beginPath(); for (let x = 0; x <= w; x += 16) { const yy = y + 24 + Math.sin((x + phase * (80 + pass * 18)) / (90 + pass * 30)) * (12 + pass * 3); x ? ctx.lineTo(x0 + x, yy) : ctx.moveTo(x0 + x, yy); } ctx.strokeStyle = [`rgba(103,232,249,.75)`,`rgba(56,189,248,.38)`,`rgba(14,165,233,.28)`][pass]; ctx.lineWidth = [5, 10, 18][pass]; ctx.stroke(); } }
-function drawNode(node, phase) { const p = node.properties || {}; if (node.type === 'shader_surface') { const parallax = Number(p.parallax ?? 1); ctx.fillStyle = shaderGradient(p, phase); ctx.fillRect(Number(p.x) - cameraX * parallax, Number(p.y), Number(p.width), Number(p.height)); return; } if (node.type === 'pen') { drawWater(p, phase); return; } if (node.type === 'platform' || node.type === 'sprite') { const x = Number(p.x) - cameraX; const y = Number(p.y); const w = Number(p.width); const h = Number(p.height); if (x + w < -80 || x > DESIGN_WIDTH + 80) return; if (node === player.node) { const img = imageFor(p.source || p.image); if (img && img.complete && img.naturalWidth) ctx.drawImage(img, x, y, w, h); else { ctx.fillStyle = p.color || '#66e3ff'; ctx.fillRect(x, y, w, h); } return; } ctx.fillStyle = p.shader ? shaderGradient({ ...p, x }, phase) : (p.color || '#ffffff'); ctx.beginPath(); ctx.roundRect(x, y, w, h, Number(p.radius || (node.type === 'platform' ? 6 : 14))); ctx.fill(); } if (node.type === 'text') { ctx.fillStyle = p.color || '#ffffff'; ctx.font = `${p.weight || 700} ${p.font_size || 20}px system-ui, sans-serif`; ctx.fillText(p.text, Number(p.x), Number(p.y)); } }
+function drawNode(node, phase) { const p = node.properties || {}; if (node.type === 'shader_surface') { const parallax = Number(p.parallax ?? 1); ctx.fillStyle = shaderGradient(p, phase); ctx.fillRect(Number(p.x) - cameraX * parallax, Number(p.y), Number(p.width), Number(p.height)); return; } if (node.type === 'pen') { drawWater(p, phase); return; } if (node.type === 'platform' || node.type === 'sprite') { const x = Number(p.x) - cameraX; const y = Number(p.y); const w = Number(p.width); const h = Number(p.height); if (x + w < -80 || x > DESIGN_WIDTH + 80) return; if (node === player.node) { const img = imageFor(p.source || p.image); if (img && img.complete && img.naturalWidth) ctx.drawImage(img, x, y, w, h); else { ctx.fillStyle = p.color || '#66e3ff'; ctx.fillRect(x, y, w, h); } return; } ctx.fillStyle = p.material ? shaderGradient({ ...p, x }, phase) : (p.color || '#ffffff'); ctx.beginPath(); ctx.roundRect(x, y, w, h, Number(p.radius || (node.type === 'platform' ? 6 : 14))); ctx.fill(); } if (node.type === 'text') { ctx.fillStyle = p.color || '#ffffff'; ctx.font = `${p.weight || 700} ${p.font_size || 20}px system-ui, sans-serif`; ctx.fillText(p.text, Number(p.x), Number(p.y)); } }
 function update(dt) { const left = keys.has('a') || keys.has('arrowleft'); const right = keys.has('d') || keys.has('arrowright'); const jump = keys.has('w') || keys.has(' ') || keys.has('arrowup'); player.vx = (left ? -world.move_speed : 0) + (right ? world.move_speed : 0); if (jump && player.grounded) { player.vy = world.jump_velocity; player.grounded = false; } player.vy += world.gravity * dt; player.x += player.vx * dt; player.y += player.vy * dt; player.grounded = false; for (const solid of solids) { const rect = nodeRect(solid); if (overlaps(player, rect) && player.vy >= 0 && player.y + player.height - player.vy * dt <= rect.y + 8) { player.y = rect.y - player.height; player.vy = 0; player.grounded = true; } } player.x = Math.max(0, Math.min(world.world_width - player.width, player.x)); if (player.y > DESIGN_HEIGHT + 180) Object.assign(player, { x: 96, y: 364, vx: 0, vy: 0 }); Object.assign(player.node.properties, { x: player.x, y: player.y }); cameraX += (Math.max(0, Math.min(world.world_width - DESIGN_WIDTH, player.x - DESIGN_WIDTH * .42)) - cameraX) * .12; won = overlaps(player, nodeRect(goal)); }
 function draw(now) { const scale = Math.min(canvas.width / DESIGN_WIDTH, canvas.height / DESIGN_HEIGHT); const ox = (canvas.width - DESIGN_WIDTH * scale) / 2; const oy = (canvas.height - DESIGN_HEIGHT * scale) / 2; ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = '#06111f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.setTransform(scale,0,0,scale,ox,oy); for (const node of nodes) drawNode(node, now / 1000); ctx.fillStyle = '#e2e8f0'; ctx.font = '600 14px system-ui'; ctx.fillText(`camera x ${Math.round(cameraX)} / ${world.world_width - DESIGN_WIDTH}`, 24, 60); if (won) { ctx.fillStyle = '#facc15'; ctx.font = '800 36px system-ui'; ctx.textAlign = 'center'; ctx.fillText('You reached the hologram gate!', DESIGN_WIDTH / 2, 118); ctx.textAlign = 'start'; } }
 let last = performance.now(); function frame(now) { update(Math.min(.033, (now - last) / 1000)); draw(now); last = now; requestAnimationFrame(frame); }

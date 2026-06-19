@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .assets import MaterialResource
+
 
 @dataclass(frozen=True)
 class AstNode:
@@ -34,6 +36,7 @@ class CompiledScene:
     node_count: int
     source_format: str
     diagnostics: tuple[str, ...] = ()
+    materials: dict[str, MaterialResource] = field(default_factory=dict)
 
     def encode(self) -> bytes:
         return self.program.encode()
