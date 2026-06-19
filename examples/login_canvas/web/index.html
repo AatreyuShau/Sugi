@@ -48,7 +48,7 @@ function draw() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.setTransform(scale, 0, 0, scale, ox, oy);
   for (const command of frame.commands) {
-    if (command.kind === 'rect') {
+    if (command.kind === 'rect' || command.kind === 'round_rect') {
       ctx.fillStyle = command.fill;
       ctx.strokeStyle = command.stroke || command.fill;
       ctx.lineWidth = command.lineWidth || 1;
@@ -57,11 +57,13 @@ function draw() {
       ctx.fill();
       if (command.stroke) ctx.stroke();
     }
-    if (command.kind === 'text') {
+    if (command.kind === 'text' || command.kind === 'wrapped_text') {
       ctx.fillStyle = command.fill;
       ctx.font = `${command.weight || 400} ${command.size}px system-ui, sans-serif`;
       ctx.textAlign = command.align || 'left';
+      ctx.globalAlpha = command.alpha ?? 1;
       ctx.fillText(command.text, command.x, command.y);
+      ctx.globalAlpha = 1;
     }
   }
 }

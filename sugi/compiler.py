@@ -8,7 +8,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when PyYAML is unava
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
 
-_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts"}
+_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations"}
 
 
 class Compiler:
@@ -37,6 +37,8 @@ class Compiler:
             out.append(Instruction(OpCode.SET_VARIABLE, {"node_id": node_id, "variable": key, "value": value}))
         for key, value in (spec.get("styles") or {}).items():
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": f"style.{key}", "value": value}))
+        if spec.get("animations"):
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "animations", "value": spec["animations"]}))
         for component in spec.get("components") or []:
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "component", "value": component}))
         events = dict(spec.get("events") or {})

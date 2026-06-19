@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from sugi.compiler import Compiler
+from sugi.visual_renderer import SceneRenderer
 from sugi.vm import SugiVM
 
 SCENE = Path(__file__).resolve().parents[1] / "login.yaml"
@@ -24,6 +25,7 @@ class LoginController:
     def __init__(self, scene: Path = SCENE) -> None:
         self.vm = SugiVM()
         self.vm.execute(Compiler().compile_yaml(scene.read_text(encoding="utf-8")))
+        self.renderer = SceneRenderer()
         self.focused: int | None = None
         self.username = self.vm.query("#username")[0]
         self.password = self.vm.query("#password")[0]
@@ -37,8 +39,8 @@ class LoginController:
             self._handle_key(str(event.get("key", "")))
 
     def frame(self) -> dict[str, Any]:
-        root = self.vm.heap.get(self.vm.query("#login_scene")[0])
-        return {"width": root.properties["width"], "height": root.properties["height"], "commands": self._draw_commands()}
+        frame = self.renderer.present(self.vm)
+        return {"width": frame.width, "height": frame.height, "commands": frame.commands}
 
     def _handle_click(self, x: float, y: float) -> None:
         hit = None
@@ -87,31 +89,6 @@ class LoginController:
     @staticmethod
     def _inside(properties: dict[str, Any], x: float, y: float) -> bool:
         return float(properties["x"]) <= x <= float(properties["x"]) + float(properties["width"]) and float(properties["y"]) <= y <= float(properties["y"]) + float(properties["height"])
-
-    def _draw_commands(self) -> list[dict[str, Any]]:
-        commands: list[dict[str, Any]] = []
-        root = self.vm.heap.get(self.vm.query("#login_scene")[0])
-        commands.append({"kind": "rect", "x": 0, "y": 0, "width": root.properties["width"], "height": root.properties["height"], "fill": root.properties["background"]})
-        for handle in root.children:
-            node = self.vm.heap.get(handle)
-            p = node.properties
-            if node.type == "panel":
-                commands.append({"kind": "rect", "x": p["x"], "y": p["y"], "width": p["width"], "height": p["height"], "radius": p["radius"], "fill": p["color"]})
-            if node.type == "text":
-                commands.append({"kind": "text", "x": p["x"], "y": p["y"], "text": p["text"], "fill": p["color"], "size": 28 if node.id == "title" else 16, "weight": 700 if node.id == "title" else 400})
-            if node.type == "input":
-                focused = bool(node.variables.get("focused"))
-                commands.append({"kind": "text", "x": p["x"], "y": p["y"] - 10, "text": p["label"], "fill": "#cbd5e1", "size": 14})
-                commands.append({"kind": "rect", "x": p["x"], "y": p["y"], "width": p["width"], "height": p["height"], "radius": 10, "fill": "#0f172a", "stroke": "#38bdf8" if focused else "#334155", "lineWidth": 2})
-                value = str(p.get("value", ""))
-                if node.id == "password":
-                    value = "•" * len(value)
-                commands.append({"kind": "text", "x": p["x"] + 14, "y": p["y"] + 29, "text": value, "fill": "#f8fafc", "size": 18})
-            if node.type == "button":
-                commands.append({"kind": "rect", "x": p["x"], "y": p["y"], "width": p["width"], "height": p["height"], "radius": 12, "fill": p["color"]})
-                commands.append({"kind": "text", "x": p["x"] + p["width"] / 2, "y": p["y"] + 31, "text": p["text"], "fill": "#082f49", "size": 18, "weight": 700, "align": "center"})
-        return commands
-
 
 controller = LoginController()
 

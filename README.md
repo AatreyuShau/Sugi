@@ -14,7 +14,7 @@ SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine protot
 
 ## Current vertical slice
 
-The project can compile a SUGI YAML page into binary `.sbc` bytecode, execute it inside the VM, mutate/query the DOM heap through protocol messages, dispatch browser-style events, and generate backend-independent render trees.
+The project can compile a SUGI YAML page into binary `.sbc` bytecode, execute it inside the VM, mutate/query the DOM heap through protocol messages, dispatch browser-style events, generate backend-independent render trees, and render full frames from scene state via `SceneRenderer.render(vm)`.
 
 ```bash
 pytest -q

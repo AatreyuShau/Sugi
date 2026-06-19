@@ -54,6 +54,8 @@ class ProtocolServer:
             return self.vm.query(message["selector"])
         if command == "dispatch_event":
             return self.vm.dispatch_event(message["node"], message["event"], message.get("payload"))
+        if command == "play_animation":
+            return self.vm.play_animation(message["node"], message["animation"])
         if command in {"mount", "unmount", "subscribe", "unsubscribe", "call", "watch"}:
             return {"accepted": True, "command": command}
         raise ValueError(f"unsupported command: {command}")

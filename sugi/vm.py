@@ -75,6 +75,14 @@ class SugiVM:
                     deliveries.append({"phase": phase, "node": handle, "event": event, "payload": payload or {}})
         return deliveries
 
+    def play_animation(self, node: NodeHandle, name: str) -> None:
+        target = self.heap.get(node)
+        animations = target.properties.get("animations", {})
+        if name not in animations:
+            raise KeyError(f"unknown animation {name!r} for node {target.id}")
+        target.variables["active_animation"] = {"name": name, "definition": animations[name]}
+        self._notify({"event": "animation_started", "node": node, "animation": name})
+
     def watch(self, node: NodeHandle, callback: Watcher) -> None:
         self._watchers[node].append(callback)
 
