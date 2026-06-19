@@ -10,6 +10,7 @@ from .vm import SugiVM
 class RenderNode:
     handle: int
     type: str
+    id: str
     properties: dict[str, Any]
     components: list[dict[str, Any]]
     children: tuple["RenderNode", ...] = field(default_factory=tuple)
@@ -27,6 +28,7 @@ class RenderTreeBuilder:
         return RenderNode(
             handle=node.handle,
             type=node.type,
+            id=node.id,
             properties=dict(node.properties),
             components=[{"type": component.type, **component.values} for component in node.components],
             children=tuple(self._build_node(vm, child) for child in node.children),
