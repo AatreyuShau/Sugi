@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 try:
     import yaml  # type: ignore
@@ -7,8 +8,9 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when PyYAML is unava
     yaml = None
 
 from .bytecode import BytecodeProgram, Instruction, OpCode
+from .scene import CompiledScene
 
-_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations"}
+_RESERVED = {"type", "id", "children", "variables", "styles", "events", "components", "on_click", "mounts", "animations", "states", "classes", "tags"}
 
 
 class Compiler:
@@ -16,6 +18,22 @@ class Compiler:
         ast = yaml.safe_load(source) if yaml is not None else _simple_yaml_load(source)
         if not isinstance(ast, dict) or "page" not in ast:
             raise ValueError("SUGI YAML root must contain a page object")
+        instructions: list[Instruction] = []
+        self._emit_node(ast["page"], None, instructions, default_type="page")
+        return BytecodeProgram(tuple(instructions))
+
+    def compile_json(self, source: str) -> BytecodeProgram:
+        ast = json.loads(source)
+        return self.compile_mapping(ast)
+
+    def compile_scene(self, source: str, source_format: str = "yaml") -> CompiledScene:
+        program = self.compile_json(source) if source_format == "json" else self.compile_yaml(source)
+        node_count = sum(1 for instruction in program.instructions if instruction.opcode == OpCode.CREATE_NODE)
+        return CompiledScene(program=program, node_count=node_count, source_format=source_format)
+
+    def compile_mapping(self, ast: dict[str, Any]) -> BytecodeProgram:
+        if not isinstance(ast, dict) or "page" not in ast:
+            raise ValueError("SUGI scene root must contain a page object")
         instructions: list[Instruction] = []
         self._emit_node(ast["page"], None, instructions, default_type="page")
         return BytecodeProgram(tuple(instructions))
@@ -39,6 +57,12 @@ class Compiler:
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": f"style.{key}", "value": value}))
         if spec.get("animations"):
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "animations", "value": spec["animations"]}))
+        for state, value in (spec.get("states") or {}).items():
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": f"state.{state}", "value": value}))
+        if spec.get("classes"):
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "classes", "value": spec["classes"]}))
+        if spec.get("tags"):
+            out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "tags", "value": spec["tags"]}))
         for component in spec.get("components") or []:
             out.append(Instruction(OpCode.SET_PROPERTY, {"node_id": node_id, "property": "component", "value": component}))
         events = dict(spec.get("events") or {})

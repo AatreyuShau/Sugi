@@ -1,0 +1,65 @@
+page:
+  id: shader_showcase
+  width: 1280
+  height: 720
+  background: "#020617"
+  children:
+    - type: text
+      id: title
+      text: "Built-in shaders, custom shaders, postprocess"
+      x: 48
+      y: 68
+      color: "#f8fafc"
+      font_size: 34
+    - type: shader_surface
+      id: aurora_pass
+      shader: aurora
+      x: 48
+      y: 120
+      width: 360
+      height: 220
+      color: "#22d3ee"
+      strength: 0.8
+      components:
+        - type: FullFrameShader
+          shader: aurora
+    - type: sprite
+      id: hologram_sprite
+      shader: hologram
+      x: 460
+      y: 120
+      width: 360
+      height: 220
+      color: "#8b5cf6"
+      blend: additive
+      components:
+        - type: ShaderSprite
+          shader: hologram
+          uniforms:
+            strength: 0.7
+            speed: 0.2
+    - type: shader_surface
+      id: custom_water
+      shader: assets/water.glsl
+      x: 872
+      y: 120
+      width: 360
+      height: 220
+      color: "#0ea5e9"
+      components:
+        - type: PostProcessShader
+          shader: assets/water.glsl
+          render_target: pooled
+    - type: panel
+      id: render_pipeline
+      x: 48
+      y: 390
+      width: 1184
+      height: 160
+      color: "#0f172a"
+      radius: 26
+      components:
+        - type: RenderTarget
+          pool: shared
+        - type: UniformBlock
+          cache: true

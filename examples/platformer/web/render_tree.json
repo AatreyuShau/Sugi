@@ -6,13 +6,62 @@
     "properties": {
       "width": 960,
       "height": 540,
-      "background": "#101827",
+      "world_width": 2600,
+      "background": "#06111f",
       "style.layout": "absolute"
     },
     "components": [],
     "children": [
       {
         "handle": 2,
+        "type": "shader_surface",
+        "id": "shader_sky",
+        "properties": {
+          "shader": "aurora",
+          "x": 0,
+          "y": 0,
+          "width": 2600,
+          "height": 360,
+          "color": "#0ea5e9",
+          "strength": 0.78,
+          "parallax": 0.18
+        },
+        "components": [
+          {
+            "type": "FullFrameShader",
+            "shader": "aurora"
+          },
+          {
+            "type": "Camera",
+            "parallax": 0.18
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "shader_surface",
+        "id": "distant_clouds",
+        "properties": {
+          "shader": "gradient_noise",
+          "x": 0,
+          "y": 48,
+          "width": 2600,
+          "height": 210,
+          "color": "#8b5cf6",
+          "strength": 0.4,
+          "parallax": 0.35
+        },
+        "components": [
+          {
+            "type": "PostProcessShader",
+            "shader": "gradient_noise"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
         "type": "camera",
         "id": "camera",
         "properties": {
@@ -29,67 +78,100 @@
           },
           {
             "type": "Camera",
-            "target": "player"
+            "target": "player",
+            "follow_axis": "x",
+            "zoom": 1
           }
         ],
         "children": []
       },
       {
-        "handle": 3,
+        "handle": 5,
+        "type": "pen",
+        "id": "sine_water",
+        "properties": {
+          "x": 0,
+          "y": 458,
+          "width": 2600,
+          "height": 82,
+          "color": "#075985",
+          "stroke": "#67e8f9",
+          "parallax": 1
+        },
+        "components": [
+          {
+            "type": "PenLayer",
+            "brush": "glowing_trail",
+            "mode": "sine_wave",
+            "amplitude": 16,
+            "wavelength": 150,
+            "history_limit": 260,
+            "glow": true
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
         "type": "sprite",
         "id": "player",
         "properties": {
           "class": "actor player",
+          "image": "assets/images/hero.svg",
+          "source": "assets/images/hero.svg",
           "x": 96,
-          "y": 368,
-          "width": 40,
-          "height": 56,
-          "color": "#66e3ff"
+          "y": 364,
+          "width": 52,
+          "height": 64,
+          "color": "#66e3ff",
+          "animations": {
+            "run": {
+              "scale": {
+                "from": 1,
+                "to": 1.06
+              }
+            }
+          }
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 96,
-            "y": 368
+            "type": "ImageSprite",
+            "source": "assets/images/hero.svg",
+            "cache": "async"
           },
           {
-            "type": "Geometry",
-            "shape": "rect",
-            "width": 40,
-            "height": 56
+            "type": "Transform",
+            "x": 96,
+            "y": 364
           },
           {
             "type": "PlatformerBody",
             "gravity": 1600,
-            "move_speed": 260,
-            "jump_velocity": -620
+            "move_speed": 340,
+            "jump_velocity": -650
           }
         ],
         "children": []
       },
       {
-        "handle": 4,
+        "handle": 7,
         "type": "sprite",
         "id": "goal",
         "properties": {
-          "class": "collectible",
-          "x": 850,
-          "y": 330,
-          "width": 42,
-          "height": 78,
+          "class": "collectible goal",
+          "x": 2440,
+          "y": 350,
+          "width": 58,
+          "height": 88,
           "color": "#facc15"
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 850,
-            "y": 330
-          },
-          {
-            "type": "Geometry",
-            "shape": "rect",
-            "width": 42,
-            "height": 78
+            "type": "ShaderSprite",
+            "shader": "hologram",
+            "uniforms": {
+              "strength": 0.45
+            }
           },
           {
             "type": "Goal"
@@ -98,105 +180,120 @@
         "children": []
       },
       {
-        "handle": 5,
+        "handle": 8,
         "type": "platform",
         "id": "ground",
         "properties": {
           "class": "solid",
           "x": 0,
           "y": 488,
-          "width": 960,
+          "width": 2600,
           "height": 52,
-          "color": "#475569"
+          "color": "#334155"
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 0,
-            "y": 488
-          },
-          {
             "type": "Geometry",
-            "shape": "rect",
-            "width": 960,
-            "height": 52
+            "shape": "rect"
           }
         ],
         "children": []
       },
       {
-        "handle": 6,
+        "handle": 9,
         "type": "platform",
         "id": "ledge_left",
         "properties": {
           "class": "solid",
-          "x": 210,
-          "y": 396,
-          "width": 160,
+          "x": 260,
+          "y": 398,
+          "width": 190,
           "height": 28,
           "color": "#64748b"
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 210,
-            "y": 396
-          },
-          {
             "type": "Geometry",
-            "shape": "rect",
-            "width": 160,
-            "height": 28
+            "shape": "rect"
           }
         ],
         "children": []
       },
       {
-        "handle": 7,
+        "handle": 10,
         "type": "platform",
         "id": "ledge_mid",
         "properties": {
           "class": "solid",
-          "x": 455,
-          "y": 318,
-          "width": 170,
+          "x": 650,
+          "y": 326,
+          "width": 210,
           "height": 28,
           "color": "#64748b"
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 455,
-            "y": 318
-          },
-          {
             "type": "Geometry",
-            "shape": "rect",
-            "width": 170,
-            "height": 28
+            "shape": "rect"
           }
         ],
         "children": []
       },
       {
-        "handle": 8,
+        "handle": 11,
+        "type": "platform",
+        "id": "ledge_ridge",
+        "properties": {
+          "class": "solid",
+          "x": 1080,
+          "y": 388,
+          "width": 250,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 12,
+        "type": "platform",
+        "id": "ledge_goal",
+        "properties": {
+          "class": "solid",
+          "x": 2210,
+          "y": 438,
+          "width": 360,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 13,
         "type": "text",
         "id": "instructions",
         "properties": {
           "x": 24,
-          "y": 28,
-          "text": "Move: A/D or \u2190/\u2192    Jump: W/Space/\u2191    Reach the gold door",
-          "color": "#e2e8f0"
+          "y": 32,
+          "text": "Horizontal SUGI platformer \u00b7 A/D or arrows to run \u00b7 W/Space to jump \u00b7 reach the hologram gate",
+          "color": "#e2e8f0",
+          "font_size": 20
         },
         "components": [
           {
-            "type": "Transform",
-            "x": 24,
-            "y": 28
-          },
-          {
             "type": "Text",
-            "value": "Move: A/D or \u2190/\u2192    Jump: W/Space/\u2191    Reach the gold door",
+            "value": "Horizontal SUGI platformer \u00b7 A/D or arrows to run \u00b7 W/Space to jump \u00b7 reach the hologram gate",
             "size": 20
           }
         ],

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI dashboard Showcase</title>
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #020617; color: #e2e8f0; font-family: system-ui, sans-serif; }
+    canvas { width: 100vw; height: 100vh; display: block; }
+    aside { position: fixed; left: 16px; bottom: 16px; padding: 10px 12px; border: 1px solid #334155; border-radius: 12px; background: rgba(15,23,42,.72); backdrop-filter: blur(12px); font-size: 13px; }
+  </style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<aside>SUGI scene owns visuals · this frontend only executes render commands</aside>
+<script id="render-tree-data" type="application/json">[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "dashboard_showcase",
+    "properties": {
+      "width": 1280,
+      "height": 720,
+      "background": "#020617"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "text",
+        "id": "title",
+        "properties": {
+          "text": "Dashboard: protocol, camera, layout, subscriptions",
+          "x": 48,
+          "y": 64,
+          "color": "#f8fafc",
+          "font_size": 32
+        },
+        "components": [],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "camera",
+        "id": "main_camera",
+        "properties": {
+          "x": 48,
+          "y": 100,
+          "width": 280,
+          "height": 220,
+          "color": "#1e293b"
+        },
+        "components": [
+          {
+            "type": "Camera",
+            "zoom": 1,
+            "follow": "revenue_chart",
+            "screen_shake": 0
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
+        "type": "panel",
+        "id": "revenue_chart",
+        "properties": {
+          "class": "metric selected",
+          "x": 360,
+          "y": 100,
+          "width": 380,
+          "height": 220,
+          "color": "#0f766e"
+        },
+        "components": [
+          {
+            "type": "Transform",
+            "opacity": 0.94
+          },
+          {
+            "type": "Glow",
+            "strength": 0.28
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 5,
+        "type": "panel",
+        "id": "event_monitor",
+        "properties": {
+          "x": 772,
+          "y": 100,
+          "width": 420,
+          "height": 220,
+          "color": "#312e81"
+        },
+        "components": [
+          {
+            "type": "Text",
+            "value": "subscribe/unsubscribe property_changed animation_finished"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
+        "type": "panel",
+        "id": "grid_layout",
+        "properties": {
+          "x": 48,
+          "y": 360,
+          "width": 1144,
+          "height": 220,
+          "color": "#111827",
+          "style.layout": "grid",
+          "style.columns": 4
+        },
+        "components": [
+          {
+            "type": "ScrollLock",
+            "start": 0,
+            "end": 240
+          },
+          {
+            "type": "Blur",
+            "radius": 8
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+]</script>
+<script>
+const canvas = document.getElementById('surface');
+const ctx = canvas.getContext('2d');
+let tree = [];
+function flatten(nodes, out = []) { for (const node of nodes) { out.push(node); flatten(node.children || [], out); } return out; }
+function resize(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
+function shaderFill(p){ const g = ctx.createLinearGradient(p.x, p.y, p.x + (p.width || 1), p.y + (p.height || 1)); g.addColorStop(0, p.color || '#22d3ee'); g.addColorStop(.5, '#8b5cf6'); g.addColorStop(1, '#f472b6'); return g; }
+function drawNode(node){ const p = node.properties || {}; const type = node.type; if (['page','viewport','container','section','panel','button','sprite','image','shader','shader_surface','particle_system','pen','camera','scroll_region'].includes(type)) { if (type !== 'page') { ctx.fillStyle = p.shader ? shaderFill(p) : (p.color || 'rgba(15,23,42,.72)'); const r = Number(p.radius || 16); ctx.beginPath(); ctx.roundRect(Number(p.x||0), Number(p.y||0), Number(p.width||0), Number(p.height||0), r); ctx.fill(); if (p.stroke) { ctx.strokeStyle = p.stroke; ctx.stroke(); } } } if (type === 'text' || p.text || p.label) { ctx.fillStyle = p.text_color || p.color || '#f8fafc'; ctx.font = `${p.weight || 600} ${p.font_size || 22}px system-ui, sans-serif`; ctx.fillText(p.text || p.label || node.id, Number(p.x||24), Number(p.y||40)); } if (type === 'particle_system') { ctx.fillStyle = p.particle_color || '#bae6fd'; for (let i=0;i<80;i++){ ctx.globalAlpha=.25+(i%7)/12; ctx.beginPath(); ctx.arc(Number(p.x||0)+(i*47)%Number(p.width||400), Number(p.y||0)+(i*83)%Number(p.height||240), Number(p.size||2), 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; } (node.children || []).forEach(drawNode); }
+async function boot(){ resize(); const embedded = document.getElementById('render-tree-data')?.textContent; tree = embedded ? JSON.parse(embedded) : await fetch('render_tree.json').then(r=>r.json()); requestAnimationFrame(draw); }
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); const root = tree[0]?.properties || {}; const sx = canvas.width / Number(root.width || 1280), sy = canvas.height / Number(root.height || 720); ctx.setTransform(Math.min(sx,sy),0,0,Math.min(sx,sy),0,0); tree.forEach(drawNode); requestAnimationFrame(draw); }
+addEventListener('resize', resize); boot();
+</script>
+</body>
+</html>

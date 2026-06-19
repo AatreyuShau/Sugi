@@ -3,138 +3,348 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SUGI Platformer Web</title>
+  <title>SUGI Horizontal Platformer</title>
   <style>
-    html, body, canvas { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #101827; }
-    canvas { display: block; }
+    html, body, canvas { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #06111f; }
+    canvas { display: block; image-rendering: auto; }
   </style>
 </head>
 <body>
 <canvas id="surface"></canvas>
+<script id="render-tree-data" type="application/json">[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "platformer_scene",
+    "properties": {
+      "width": 960,
+      "height": 540,
+      "world_width": 2600,
+      "background": "#06111f",
+      "style.layout": "absolute"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "shader_surface",
+        "id": "shader_sky",
+        "properties": {
+          "shader": "aurora",
+          "x": 0,
+          "y": 0,
+          "width": 2600,
+          "height": 360,
+          "color": "#0ea5e9",
+          "strength": 0.78,
+          "parallax": 0.18
+        },
+        "components": [
+          {
+            "type": "FullFrameShader",
+            "shader": "aurora"
+          },
+          {
+            "type": "Camera",
+            "parallax": 0.18
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "shader_surface",
+        "id": "distant_clouds",
+        "properties": {
+          "shader": "gradient_noise",
+          "x": 0,
+          "y": 48,
+          "width": 2600,
+          "height": 210,
+          "color": "#8b5cf6",
+          "strength": 0.4,
+          "parallax": 0.35
+        },
+        "components": [
+          {
+            "type": "PostProcessShader",
+            "shader": "gradient_noise"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
+        "type": "camera",
+        "id": "camera",
+        "properties": {
+          "x": 0,
+          "y": 0,
+          "width": 960,
+          "height": 540
+        },
+        "components": [
+          {
+            "type": "Transform",
+            "x": 0,
+            "y": 0
+          },
+          {
+            "type": "Camera",
+            "target": "player",
+            "follow_axis": "x",
+            "zoom": 1
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 5,
+        "type": "pen",
+        "id": "sine_water",
+        "properties": {
+          "x": 0,
+          "y": 458,
+          "width": 2600,
+          "height": 82,
+          "color": "#075985",
+          "stroke": "#67e8f9",
+          "parallax": 1
+        },
+        "components": [
+          {
+            "type": "PenLayer",
+            "brush": "glowing_trail",
+            "mode": "sine_wave",
+            "amplitude": 16,
+            "wavelength": 150,
+            "history_limit": 260,
+            "glow": true
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
+        "type": "sprite",
+        "id": "player",
+        "properties": {
+          "class": "actor player",
+          "image": "assets/images/hero.svg",
+          "source": "assets/images/hero.svg",
+          "x": 96,
+          "y": 364,
+          "width": 52,
+          "height": 64,
+          "color": "#66e3ff",
+          "animations": {
+            "run": {
+              "scale": {
+                "from": 1,
+                "to": 1.06
+              }
+            }
+          }
+        },
+        "components": [
+          {
+            "type": "ImageSprite",
+            "source": "assets/images/hero.svg",
+            "cache": "async"
+          },
+          {
+            "type": "Transform",
+            "x": 96,
+            "y": 364
+          },
+          {
+            "type": "PlatformerBody",
+            "gravity": 1600,
+            "move_speed": 340,
+            "jump_velocity": -650
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 7,
+        "type": "sprite",
+        "id": "goal",
+        "properties": {
+          "class": "collectible goal",
+          "x": 2440,
+          "y": 350,
+          "width": 58,
+          "height": 88,
+          "color": "#facc15"
+        },
+        "components": [
+          {
+            "type": "ShaderSprite",
+            "shader": "hologram",
+            "uniforms": {
+              "strength": 0.45
+            }
+          },
+          {
+            "type": "Goal"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 8,
+        "type": "platform",
+        "id": "ground",
+        "properties": {
+          "class": "solid",
+          "x": 0,
+          "y": 488,
+          "width": 2600,
+          "height": 52,
+          "color": "#334155"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 9,
+        "type": "platform",
+        "id": "ledge_left",
+        "properties": {
+          "class": "solid",
+          "x": 260,
+          "y": 398,
+          "width": 190,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 10,
+        "type": "platform",
+        "id": "ledge_mid",
+        "properties": {
+          "class": "solid",
+          "x": 650,
+          "y": 326,
+          "width": 210,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 11,
+        "type": "platform",
+        "id": "ledge_ridge",
+        "properties": {
+          "class": "solid",
+          "x": 1080,
+          "y": 388,
+          "width": 250,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 12,
+        "type": "platform",
+        "id": "ledge_goal",
+        "properties": {
+          "class": "solid",
+          "x": 2210,
+          "y": 438,
+          "width": 360,
+          "height": 28,
+          "color": "#64748b"
+        },
+        "components": [
+          {
+            "type": "Geometry",
+            "shape": "rect"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 13,
+        "type": "text",
+        "id": "instructions",
+        "properties": {
+          "x": 24,
+          "y": 32,
+          "text": "Horizontal SUGI platformer \u00b7 A/D or arrows to run \u00b7 W/Space to jump \u00b7 reach the hologram gate",
+          "color": "#e2e8f0",
+          "font_size": 20
+        },
+        "components": [
+          {
+            "type": "Text",
+            "value": "Horizontal SUGI platformer \u00b7 A/D or arrows to run \u00b7 W/Space to jump \u00b7 reach the hologram gate",
+            "size": 20
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+]</script>
 <script>
 const DESIGN_WIDTH = 960;
 const DESIGN_HEIGHT = 540;
 const canvas = document.getElementById('surface');
 const ctx = canvas.getContext('2d');
 const keys = new Set();
+const imageCache = new Map();
 let nodes = [];
+let roots = [];
 let player;
 let solids = [];
 let goal;
-let world = { gravity: 1600, move_speed: 260, jump_velocity: -620 };
+let world = { gravity: 1600, move_speed: 340, jump_velocity: -650, world_width: 2600 };
+let cameraX = 0;
+let won = false;
 
-function flatten(input, output = []) {
-  for (const node of input) {
-    output.push(node);
-    flatten(node.children || [], output);
-  }
-  return output;
-}
-
-function resize() {
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight}px`;
-}
-
-function overlaps(a, b) {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
-}
-
-function nodeRect(node) {
-  const p = node.properties;
-  return { x: Number(p.x), y: Number(p.y), width: Number(p.width), height: Number(p.height) };
-}
-
-function update(dt) {
-  const left = keys.has('a') || keys.has('arrowleft');
-  const right = keys.has('d') || keys.has('arrowright');
-  const jump = keys.has('w') || keys.has(' ') || keys.has('arrowup');
-  player.vx = (left ? -world.move_speed : 0) + (right ? world.move_speed : 0);
-  if (jump && player.grounded) {
-    player.vy = world.jump_velocity;
-    player.grounded = false;
-  }
-  player.vy += world.gravity * dt;
-  player.x += player.vx * dt;
-  player.y += player.vy * dt;
-  player.grounded = false;
-  for (const solid of solids) {
-    const rect = nodeRect(solid);
-    if (overlaps(player, rect) && player.vy >= 0) {
-      player.y = rect.y - player.height;
-      player.vy = 0;
-      player.grounded = true;
-    }
-  }
-  player.x = Math.max(0, Math.min(DESIGN_WIDTH - player.width, player.x));
-  if (player.y > DESIGN_HEIGHT) Object.assign(player, { x: 96, y: 368, vx: 0, vy: 0 });
-}
-
-function draw() {
-  const scale = Math.min(canvas.width / DESIGN_WIDTH, canvas.height / DESIGN_HEIGHT);
-  const ox = (canvas.width - DESIGN_WIDTH * scale) / 2;
-  const oy = (canvas.height - DESIGN_HEIGHT * scale) / 2;
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#101827';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.setTransform(scale, 0, 0, scale, ox, oy);
-  for (const node of nodes) {
-    const p = node.properties;
-    if (node.type === 'sprite' || node.type === 'platform') {
-      const rect = node === player.node ? player : nodeRect(node);
-      ctx.fillStyle = p.color || '#ffffff';
-      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
-    }
-    if (node.type === 'text') {
-      ctx.fillStyle = p.color || '#ffffff';
-      ctx.font = '20px system-ui, sans-serif';
-      ctx.fillText(p.text, Number(p.x), Number(p.y));
-    }
-  }
-  if (overlaps(player, nodeRect(goal))) {
-    ctx.fillStyle = '#facc15';
-    ctx.font = '700 36px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('You reached the goal!', DESIGN_WIDTH / 2, 120);
-    ctx.textAlign = 'start';
-  }
-}
-
-let last = performance.now();
-function frame(now) {
-  update(Math.min(0.033, (now - last) / 1000));
-  draw();
-  last = now;
-  requestAnimationFrame(frame);
-}
-
-async function boot() {
-  const tree = await fetch('render_tree.json').then(response => {
-    if (!response.ok) throw new Error('Generate render_tree.json first with tools/export_render_tree.py');
-    return response.json();
-  });
-  nodes = flatten(tree);
-  const root = nodes.find(node => node.type === 'page');
-  world = { ...world, ...root.properties };
-  const playerNode = nodes.find(node => String(node.properties.class || '').split(/\s+/).includes('player'));
-  player = { ...nodeRect(playerNode), vx: 0, vy: 0, grounded: false, node: playerNode };
-  solids = nodes.filter(node => String(node.properties.class || '').split(/\s+/).includes('solid'));
-  goal = nodes.find(node => node.components.some(component => component.type === 'Goal'));
-  requestAnimationFrame(frame);
-}
-
-addEventListener('resize', resize);
-addEventListener('keydown', event => keys.add(event.key.toLowerCase()));
-addEventListener('keyup', event => keys.delete(event.key.toLowerCase()));
-resize();
-boot().catch(error => {
-  ctx.fillStyle = '#f87171';
-  ctx.font = '20px monospace';
-  ctx.fillText(error.message, 24, 48);
-});
+function flatten(input, output = []) { for (const node of input) { output.push(node); flatten(node.children || [], output); } return output; }
+function resize() { canvas.width = window.innerWidth * devicePixelRatio; canvas.height = window.innerHeight * devicePixelRatio; canvas.style.width = `${window.innerWidth}px`; canvas.style.height = `${window.innerHeight}px`; }
+function overlaps(a, b) { return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y; }
+function nodeRect(node) { const p = node.properties; return { x: Number(p.x), y: Number(p.y), width: Number(p.width), height: Number(p.height) }; }
+function classes(node) { return String(node.properties.class || '').split(/\s+/); }
+function imageFor(src) { if (!src) return null; if (!imageCache.has(src)) { const img = new Image(); img.src = `../../${src}`; imageCache.set(src, img); } return imageCache.get(src); }
+function shaderGradient(p, phase = 0) { const g = ctx.createLinearGradient(p.x - cameraX * Number(p.parallax ?? 1), 0, p.x + Number(p.width), Number(p.height)); g.addColorStop(0, '#0284c7'); g.addColorStop(.42 + Math.sin(phase) * .08, '#7c3aed'); g.addColorStop(1, '#fb7185'); return g; }
+function drawWater(p, phase) { const x0 = Number(p.x) - cameraX; const y = Number(p.y); const w = Number(p.width); ctx.fillStyle = 'rgba(7, 89, 133, .72)'; ctx.fillRect(x0, y + 18, w, Number(p.height)); ctx.lineCap = 'round'; for (let pass = 0; pass < 3; pass++) { ctx.beginPath(); for (let x = 0; x <= w; x += 16) { const yy = y + 24 + Math.sin((x + phase * (80 + pass * 18)) / (90 + pass * 30)) * (12 + pass * 3); x ? ctx.lineTo(x0 + x, yy) : ctx.moveTo(x0 + x, yy); } ctx.strokeStyle = [`rgba(103,232,249,.75)`,`rgba(56,189,248,.38)`,`rgba(14,165,233,.28)`][pass]; ctx.lineWidth = [5, 10, 18][pass]; ctx.stroke(); } }
+function drawNode(node, phase) { const p = node.properties || {}; if (node.type === 'shader_surface') { const parallax = Number(p.parallax ?? 1); ctx.fillStyle = shaderGradient(p, phase); ctx.fillRect(Number(p.x) - cameraX * parallax, Number(p.y), Number(p.width), Number(p.height)); return; } if (node.type === 'pen') { drawWater(p, phase); return; } if (node.type === 'platform' || node.type === 'sprite') { const x = Number(p.x) - cameraX; const y = Number(p.y); const w = Number(p.width); const h = Number(p.height); if (x + w < -80 || x > DESIGN_WIDTH + 80) return; if (node === player.node) { const img = imageFor(p.source || p.image); if (img && img.complete && img.naturalWidth) ctx.drawImage(img, x, y, w, h); else { ctx.fillStyle = p.color || '#66e3ff'; ctx.fillRect(x, y, w, h); } return; } ctx.fillStyle = p.shader ? shaderGradient({ ...p, x }, phase) : (p.color || '#ffffff'); ctx.beginPath(); ctx.roundRect(x, y, w, h, Number(p.radius || (node.type === 'platform' ? 6 : 14))); ctx.fill(); } if (node.type === 'text') { ctx.fillStyle = p.color || '#ffffff'; ctx.font = `${p.weight || 700} ${p.font_size || 20}px system-ui, sans-serif`; ctx.fillText(p.text, Number(p.x), Number(p.y)); } }
+function update(dt) { const left = keys.has('a') || keys.has('arrowleft'); const right = keys.has('d') || keys.has('arrowright'); const jump = keys.has('w') || keys.has(' ') || keys.has('arrowup'); player.vx = (left ? -world.move_speed : 0) + (right ? world.move_speed : 0); if (jump && player.grounded) { player.vy = world.jump_velocity; player.grounded = false; } player.vy += world.gravity * dt; player.x += player.vx * dt; player.y += player.vy * dt; player.grounded = false; for (const solid of solids) { const rect = nodeRect(solid); if (overlaps(player, rect) && player.vy >= 0 && player.y + player.height - player.vy * dt <= rect.y + 8) { player.y = rect.y - player.height; player.vy = 0; player.grounded = true; } } player.x = Math.max(0, Math.min(world.world_width - player.width, player.x)); if (player.y > DESIGN_HEIGHT + 180) Object.assign(player, { x: 96, y: 364, vx: 0, vy: 0 }); Object.assign(player.node.properties, { x: player.x, y: player.y }); cameraX += (Math.max(0, Math.min(world.world_width - DESIGN_WIDTH, player.x - DESIGN_WIDTH * .42)) - cameraX) * .12; won = overlaps(player, nodeRect(goal)); }
+function draw(now) { const scale = Math.min(canvas.width / DESIGN_WIDTH, canvas.height / DESIGN_HEIGHT); const ox = (canvas.width - DESIGN_WIDTH * scale) / 2; const oy = (canvas.height - DESIGN_HEIGHT * scale) / 2; ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = '#06111f'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.setTransform(scale,0,0,scale,ox,oy); for (const node of nodes) drawNode(node, now / 1000); ctx.fillStyle = '#e2e8f0'; ctx.font = '600 14px system-ui'; ctx.fillText(`camera x ${Math.round(cameraX)} / ${world.world_width - DESIGN_WIDTH}`, 24, 60); if (won) { ctx.fillStyle = '#facc15'; ctx.font = '800 36px system-ui'; ctx.textAlign = 'center'; ctx.fillText('You reached the hologram gate!', DESIGN_WIDTH / 2, 118); ctx.textAlign = 'start'; } }
+let last = performance.now(); function frame(now) { update(Math.min(.033, (now - last) / 1000)); draw(now); last = now; requestAnimationFrame(frame); }
+async function boot() { { const embedded = document.getElementById('render-tree-data')?.textContent; roots = embedded ? JSON.parse(embedded) : await fetch('render_tree.json').then(r => { if (!r.ok) throw new Error('Run from a static server so render_tree.json can be fetched.'); return r.json(); }); } nodes = flatten(roots); const root = nodes.find(node => node.type === 'page'); world = { ...world, ...root.properties, ...root.variables }; const playerNode = nodes.find(node => classes(node).includes('player')); player = { ...nodeRect(playerNode), vx: 0, vy: 0, grounded: false, node: playerNode }; solids = nodes.filter(node => classes(node).includes('solid')); goal = nodes.find(node => classes(node).includes('goal')); requestAnimationFrame(frame); }
+addEventListener('resize', resize); addEventListener('keydown', event => keys.add(event.key.toLowerCase())); addEventListener('keyup', event => keys.delete(event.key.toLowerCase())); resize(); boot().catch(error => { ctx.fillStyle = '#f87171'; ctx.font = '20px monospace'; ctx.fillText(error.message, 24, 48); });
 </script>
 </body>
 </html>
