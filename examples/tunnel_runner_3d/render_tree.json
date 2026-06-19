@@ -1,0 +1,107 @@
+[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "tunnel_runner_scene",
+    "properties": {
+      "width": 960,
+      "height": 540,
+      "background": "#020617"
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "camera",
+        "id": "runner_camera",
+        "properties": {
+          "fov": 72
+        },
+        "components": [
+          {
+            "type": "Camera3D",
+            "projection": "perspective"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 3,
+        "type": "player",
+        "id": "hovercraft",
+        "properties": {
+          "lane": 0,
+          "color": "#38bdf8"
+        },
+        "components": [
+          {
+            "type": "Transform3D",
+            "x": 0,
+            "y": "-0.7",
+            "z": "1.2"
+          },
+          {
+            "type": "HovercraftController",
+            "lanes": 3
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 4,
+        "type": "obstacle",
+        "id": "gate_left",
+        "properties": {
+          "lane": -1,
+          "z": 18,
+          "color": "#fb7185"
+        },
+        "components": [
+          {
+            "type": "Box3D",
+            "width": "1.1",
+            "height": "1.4",
+            "depth": "1.1"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 5,
+        "type": "obstacle",
+        "id": "gate_right",
+        "properties": {
+          "lane": 1,
+          "z": 30,
+          "color": "#f97316"
+        },
+        "components": [
+          {
+            "type": "Box3D",
+            "width": "1.1",
+            "height": "1.4",
+            "depth": "1.1"
+          }
+        ],
+        "children": []
+      },
+      {
+        "handle": 6,
+        "type": "collectible",
+        "id": "energy_ring",
+        "properties": {
+          "lane": 0,
+          "z": 24,
+          "color": "#facc15"
+        },
+        "components": [
+          {
+            "type": "Ring3D",
+            "radius": "0.6"
+          }
+        ],
+        "children": []
+      }
+    ]
+  }
+]
