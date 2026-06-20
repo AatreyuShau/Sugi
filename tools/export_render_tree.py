@@ -28,7 +28,7 @@ def render_node_to_dict(node: RenderNode) -> dict[str, Any]:
 
 def export_render_tree(source: Path, destination: Path) -> None:
     vm = SugiVM()
-    vm.execute(Compiler().compile_yaml(source.read_text(encoding="utf-8")))
+    vm.execute_scene(Compiler().compile_scene(source.read_text(encoding="utf-8")))
     roots = RenderTreeBuilder().build(vm)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps([render_node_to_dict(root) for root in roots], indent=2), encoding="utf-8")

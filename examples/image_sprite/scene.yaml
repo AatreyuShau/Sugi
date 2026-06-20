@@ -5,7 +5,7 @@ page:
   children:
     - type: sprite
       id: player
-      image: assets/player.png
+      image: assets/images/hero.svg
       x: 96
       y: 72
       width: 64
