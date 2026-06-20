@@ -46,7 +46,7 @@ class Compiler:
         for name, spec in (specs or {}).items():
             if not isinstance(spec, dict) or not spec.get("vertex") or not spec.get("fragment"):
                 raise ValueError(f"material {name!r} requires vertex and fragment shader paths")
-            materials[name] = MaterialResource(name=name, vertex=spec["vertex"], fragment=spec["fragment"], uniforms=dict(spec.get("uniforms") or {}))
+            materials[name] = MaterialResource(name=name, vertex=spec["vertex"], fragment=spec["fragment"], uniforms=dict(spec.get("uniforms") or {}), shadertoy=bool(spec.get("shadertoy", False)))
         return materials
 
     def _emit_node(self, spec: dict[str, Any], parent_id: str | None, out: list[Instruction], default_type: str | None = None) -> None:

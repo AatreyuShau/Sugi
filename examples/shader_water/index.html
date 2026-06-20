@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI Water Shader</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #020617; color: #e2e8f0; font-family: system-ui, sans-serif; }
+    canvas { width: 100vw; height: 100vh; display: block; }
+    aside { position: fixed; left: 16px; bottom: 16px; padding: 10px 12px; border: 1px solid #155e75; border-radius: 12px; background: rgba(8,47,73,.72); backdrop-filter: blur(12px); }
+  </style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<aside>water.yaml → VM render tree → custom WebGL vertex/fragment shader</aside>
+<script type="module">
+import { SugiWebGLRenderer } from '../shared/sugi-webgl-renderer.js';
+
+const canvas = document.getElementById('surface');
+const renderer = new SugiWebGLRenderer(canvas, { baseUrl: './' });
+const scene = await fetch('render_tree.json').then((response) => {
+  if (!response.ok) throw new Error('Run this demo from a static server so render_tree.json can be loaded.');
+  return response.json();
+});
+await renderer.loadScene(scene);
+function frame(now) {
+  renderer.render(now / 1000);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

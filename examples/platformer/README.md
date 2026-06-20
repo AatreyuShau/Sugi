@@ -45,6 +45,6 @@ python tools/export_render_tree.py examples/platformer/platformer.yaml /tmp/plat
 ## Showcase coverage
 
 This demo is intentionally application-driven: keyboard input and collision remain in the frontend, while the shared SUGI scene defines the page, sprites, solids, goal component, text, and render tree consumed by both web and native frontends.
-## Horizontal shader platformer update
+## Material platformer update
 
-The platformer now showcases a horizontal scrolling SUGI scene: the player is declared as an `ImageSprite`, the sky is backed by application-supplied GLSL materials, the camera follows the player on the x-axis, and the water layer is a declarative `PenLayer` sine wave effect. The browser and native frontends both consume the same SUGI scene data while keeping input and collision as application logic.
+The platformer now showcases a horizontal scrolling SUGI scene: the player is declared as an image sprite, the sky/cloud/water/gate layers are backed by application-supplied materials, the camera follows the player on the x-axis, and both web and native frontends consume the same SUGI scene data while keeping input and collision as application logic.

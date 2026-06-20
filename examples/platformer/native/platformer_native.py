@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
 from pathlib import Path
 import sys
 import tkinter as tk
@@ -12,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from sugi.compiler import Compiler
+from sugi.native_renderer import NativeCanvasRenderer
 from sugi.renderer import RenderNode, RenderTreeBuilder
 from sugi.vm import SugiVM
 
@@ -66,6 +66,7 @@ class PlatformerApp:
         self.app.title("SUGI Horizontal Platformer Native")
         self.canvas = tk.Canvas(self.app, width=WIDTH, height=HEIGHT, bg="#06111f", highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.renderer = NativeCanvasRenderer(self.canvas, self.roots, ROOT)
         self.app.bind("<KeyPress>", lambda event: self.keys.add(event.keysym.lower()))
         self.app.bind("<KeyRelease>", lambda event: self.keys.discard(event.keysym.lower()))
 
@@ -117,58 +118,11 @@ class PlatformerApp:
     def overlaps(ax: float, ay: float, aw: float, ah: float, bx: float, by: float, bw: float, bh: float) -> bool:
         return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 
-    def draw_shader_rect(self, node: RenderNode) -> None:
-        p = node.properties
-        parallax = float(p.get("parallax", 1))
-        x = float(p.get("x", 0)) - self.camera_x * parallax
-        y = float(p.get("y", 0))
-        w = float(p.get("width", 0))
-        h = float(p.get("height", 0))
-        steps = 18
-        for i in range(steps):
-            t = i / max(steps - 1, 1)
-            r = int(2 + 120 * t)
-            g = int(132 - 56 * t)
-            b = int(199 + 40 * math.sin(t * math.pi))
-            self.canvas.create_rectangle(x, y + h * t, x + w, y + h * (t + 1 / steps), fill=f"#{r:02x}{g:02x}{b:02x}", outline="")
-
-    def draw_water(self, node: RenderNode) -> None:
-        p = node.properties
-        x0 = float(p.get("x", 0)) - self.camera_x
-        y = float(p.get("y", 0))
-        w = float(p.get("width", 0))
-        h = float(p.get("height", 0))
-        self.canvas.create_rectangle(x0, y + 18, x0 + w, y + h, fill="#075985", outline="")
-        phase = self.tick_count / 12
-        points = []
-        for x in range(0, int(w) + 1, 18):
-            points.extend([x0 + x, y + 24 + math.sin((x + phase * 28) / 92) * 14])
-        self.canvas.create_line(*points, fill="#67e8f9", width=5, smooth=True)
-        self.canvas.create_line(*points, fill="#38bdf8", width=12, smooth=True)
-
     def draw(self) -> None:
-        self.canvas.delete("all")
-        for node in self.nodes:
-            if node.type == "shader_surface":
-                self.draw_shader_rect(node)
-            elif node.type == "pen":
-                self.draw_water(node)
-            elif node.type in {"sprite", "platform"}:
-                source = self.vm.heap.get(node.handle).properties
-                x = float(source["x"]) - self.camera_x
-                y, w, h = (float(source[name]) for name in ("y", "width", "height"))
-                if x + w < -80 or x > WIDTH + 80:
-                    continue
-                fill = str(source.get("color", "#ffffff"))
-                if "player" in str(source.get("class", "")):
-                    self.canvas.create_oval(x + 10, y, x + w - 10, y + 24, fill="#fde68a", outline="")
-                    self.canvas.create_rectangle(x + 10, y + 22, x + w - 10, y + h - 8, fill="#38bdf8", outline="")
-                    self.canvas.create_rectangle(x + 14, y + h - 8, x + 24, y + h, fill="#0f172a", outline="")
-                    self.canvas.create_rectangle(x + w - 24, y + h - 8, x + w - 14, y + h, fill="#0f172a", outline="")
-                else:
-                    self.canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline="")
-            elif node.type == "text":
-                self.canvas.create_text(float(node.properties["x"]), float(node.properties["y"]), anchor="nw", text=str(node.properties["text"]), fill=str(node.properties.get("color", "#ffffff")), font=("Arial", int(node.properties.get("font_size", 16)), "bold"))
+        self.roots = RenderTreeBuilder().build(self.vm)
+        self.renderer.roots = self.roots
+        self.renderer.materials = self.renderer._materials()
+        self.renderer.render(self.camera_x)
         gx, gy, gw, gh = (float(self.goal.properties[name]) for name in ("x", "y", "width", "height"))
         if self.overlaps(self.player.x, self.player.y, self.player.width, self.player.height, gx, gy, gw, gh):
             self.canvas.create_text(WIDTH / 2, 120, text="You reached the hologram gate!", fill="#facc15", font=("Arial", 34, "bold"))

@@ -1,0 +1,19 @@
+materials:
+  water:
+    vertex: shaders/screen.vert
+    fragment: shaders/water.frag
+    uniforms:
+      iTime: auto
+      iResolution: auto
+page:
+  id: shader_water
+  width: 800
+  height: 450
+  children:
+    - type: surface
+      id: water_surface
+      x: 0
+      y: 0
+      width: 800
+      height: 450
+      material: water

@@ -1,0 +1,39 @@
+[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "shader_water",
+    "properties": {
+      "width": 800,
+      "height": 450,
+      "__materials": {
+        "water": {
+          "vertex": "shaders/screen.vert",
+          "fragment": "shaders/water.frag",
+          "uniforms": {
+            "iTime": "auto",
+            "iResolution": "auto"
+          },
+          "shadertoy": false
+        }
+      }
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "surface",
+        "id": "water_surface",
+        "properties": {
+          "x": 0,
+          "y": 0,
+          "width": 800,
+          "height": 450,
+          "material": "water"
+        },
+        "components": [],
+        "children": []
+      }
+    ]
+  }
+]
