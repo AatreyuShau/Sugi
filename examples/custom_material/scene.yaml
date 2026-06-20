@@ -1,0 +1,19 @@
+materials:
+  hologram:
+    vertex: shaders/screen.vert
+    fragment: shaders/hologram.frag
+    uniforms:
+      iTime: auto
+page:
+  id: custom_material
+  width: 320
+  height: 240
+  children:
+    - type: sprite
+      id: orb
+      image: assets/orb.png
+      material: hologram
+      x: 96
+      y: 72
+      width: 96
+      height: 96

@@ -1,0 +1,29 @@
+[
+  {
+    "handle": 1,
+    "type": "page",
+    "id": "image_sprite",
+    "properties": {
+      "width": 320,
+      "height": 240
+    },
+    "components": [],
+    "children": [
+      {
+        "handle": 2,
+        "type": "sprite",
+        "id": "player",
+        "properties": {
+          "image": "assets/images/hero.svg",
+          "source": "assets/images/hero.svg",
+          "x": 96,
+          "y": 72,
+          "width": 64,
+          "height": 64
+        },
+        "components": [],
+        "children": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUGI Image Sprite</title>
+  <style>html,body{margin:0;height:100%;background:#020617}canvas{display:block;width:100vw;height:100vh}</style>
+</head>
+<body>
+<canvas id="surface"></canvas>
+<script type="module">
+import { SugiWebGLRenderer } from '../shared/sugi-webgl-renderer.js';
+const renderer = new SugiWebGLRenderer(document.getElementById('surface'), { baseUrl: '../../' });
+await renderer.loadScene(await fetch('render_tree.json').then((response) => response.json()));
+function frame(now) { renderer.render(now / 1000); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

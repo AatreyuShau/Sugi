@@ -8,7 +8,42 @@
       "height": 540,
       "world_width": 2600,
       "background": "#06111f",
-      "style.layout": "absolute"
+      "style.layout": "absolute",
+      "__materials": {
+        "sky": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/sky.frag",
+          "uniforms": {
+            "time": 0
+          },
+          "shadertoy": false
+        },
+        "clouds": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/clouds.frag",
+          "uniforms": {
+            "time": 0
+          },
+          "shadertoy": false
+        },
+        "water": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/water.frag",
+          "uniforms": {
+            "time": 0,
+            "amplitude": "0.18"
+          },
+          "shadertoy": false
+        },
+        "hologram": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/hologram.frag",
+          "uniforms": {
+            "strength": "0.45"
+          },
+          "shadertoy": false
+        }
+      }
     },
     "components": [],
     "children": [

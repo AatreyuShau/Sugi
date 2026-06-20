@@ -6,7 +6,40 @@
     "properties": {
       "width": 1280,
       "height": 720,
-      "background": "#020617"
+      "background": "#020617",
+      "__materials": {
+        "sky": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/sky.frag",
+          "uniforms": {
+            "time": 0
+          },
+          "shadertoy": false
+        },
+        "water": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/water.frag",
+          "uniforms": {
+            "time": 0,
+            "amplitude": "0.2"
+          },
+          "shadertoy": false
+        },
+        "hologram": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/hologram.frag",
+          "uniforms": {
+            "strength": "0.7"
+          },
+          "shadertoy": false
+        },
+        "bloom": {
+          "vertex": "assets/shaders/screen.vert",
+          "fragment": "assets/shaders/bloom.frag",
+          "uniforms": {},
+          "shadertoy": false
+        }
+      }
     },
     "components": [],
     "children": [

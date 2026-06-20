@@ -1,0 +1,12 @@
+page:
+  id: image_sprite
+  width: 320
+  height: 240
+  children:
+    - type: sprite
+      id: player
+      image: assets/images/hero.svg
+      x: 96
+      y: 72
+      width: 64
+      height: 64

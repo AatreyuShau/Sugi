@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
 from pathlib import Path
 import sys
 import tkinter as tk
@@ -117,43 +116,12 @@ class PlatformerApp:
     def overlaps(ax: float, ay: float, aw: float, ah: float, bx: float, by: float, bw: float, bh: float) -> bool:
         return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 
-    def draw_shader_rect(self, node: RenderNode) -> None:
-        p = node.properties
-        parallax = float(p.get("parallax", 1))
-        x = float(p.get("x", 0)) - self.camera_x * parallax
-        y = float(p.get("y", 0))
-        w = float(p.get("width", 0))
-        h = float(p.get("height", 0))
-        steps = 18
-        for i in range(steps):
-            t = i / max(steps - 1, 1)
-            r = int(2 + 120 * t)
-            g = int(132 - 56 * t)
-            b = int(199 + 40 * math.sin(t * math.pi))
-            self.canvas.create_rectangle(x, y + h * t, x + w, y + h * (t + 1 / steps), fill=f"#{r:02x}{g:02x}{b:02x}", outline="")
-
-    def draw_water(self, node: RenderNode) -> None:
-        p = node.properties
-        x0 = float(p.get("x", 0)) - self.camera_x
-        y = float(p.get("y", 0))
-        w = float(p.get("width", 0))
-        h = float(p.get("height", 0))
-        self.canvas.create_rectangle(x0, y + 18, x0 + w, y + h, fill="#075985", outline="")
-        phase = self.tick_count / 12
-        points = []
-        for x in range(0, int(w) + 1, 18):
-            points.extend([x0 + x, y + 24 + math.sin((x + phase * 28) / 92) * 14])
-        self.canvas.create_line(*points, fill="#67e8f9", width=5, smooth=True)
-        self.canvas.create_line(*points, fill="#38bdf8", width=12, smooth=True)
-
     def draw(self) -> None:
         self.canvas.delete("all")
         for node in self.nodes:
-            if node.type == "shader_surface":
-                self.draw_shader_rect(node)
-            elif node.type == "pen":
-                self.draw_water(node)
-            elif node.type in {"sprite", "platform"}:
+            if node.type in {"shader_surface", "surface", "pen"}:
+                continue
+            if node.type in {"sprite", "platform"}:
                 source = self.vm.heap.get(node.handle).properties
                 x = float(source["x"]) - self.camera_x
                 y, w, h = (float(source[name]) for name in ("y", "width", "height"))
