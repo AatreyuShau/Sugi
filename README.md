@@ -1,31 +1,30 @@
 # Sugi
 
-SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine prototype. YAML is treated only as a source language; compiled applications run as SUGI bytecode against a DOM heap and expose behavior through a transport-independent protocol.
+SUGI (Scene UI Graph Interface) is a language-agnostic UI virtual machine prototype. YAML is a source language; compiled applications run as SUGI bytecode against a DOM heap and render through backend-owned renderers.
 
 ## Repository layout
 
-- `sugi/` - initial working Python implementation of the compiler, bytecode, VM, protocol dispatcher, DOM heap, and render tree builder.
-- `compiler/`, `runtime/`, `renderer/`, `protocol/` - subsystem boundaries with importable production slices for parsers, ASTs, validators, render commands, backend adapters, GPU resources, particles, textures, and protocol wrappers.
-- `sdk/` - generated thin protocol wrappers for Python, Rust, Go, C#, Java, and JavaScript; SDKs never duplicate runtime logic.
-- `assets/` - backend-independent manifests for images, shaders, and fonts.
-- `examples/` - source-language examples, including a shared SUGI platformer scene with web and native frontends.
-- `tests/` - subsystem and vertical-slice tests.
-- `tools/` - developer tooling.
-- `docs/` - architecture notes, rendering capabilities, and diagrams.
+- `sugi/` - Python compiler, bytecode, VM, protocol dispatcher, DOM heap, render tree builder, and debug native renderer.
+- `compiler/`, `runtime/`, `renderer/`, `protocol/` - subsystem boundaries for parsers, ASTs, validators, render commands, backend adapters, GPU resources, textures, and protocol wrappers.
+- `sdk/` - thin protocol wrappers for Python, Rust, Go, C#, Java, and JavaScript.
+- `assets/` - backend-independent image, shader, material, and font assets.
+- `examples/` - supported end-to-end examples: platformer, water shader, and login page.
+- `docs/` - architecture and rendering notes, including `docs/rendering_pipeline.md` for scene/render-tree authoring.
 
 ## Current vertical slice
 
-The project can compile SUGI YAML or JSON pages into binary `.sbc` bytecode or a `CompiledScene` artifact, execute it inside the VM, mutate/query the DOM heap through protocol messages, dispatch browser-style events, generate backend-independent render trees, and render full frames from scene state via `SceneRenderer.render(vm)`.
+The project can compile SUGI YAML or JSON pages into bytecode or a `CompiledScene`, execute them inside the VM, mutate/query DOM state, generate render trees with material metadata, and render via web/native demo renderers.
 
 ```bash
 pytest -q
 ```
 
-## Platformer example
+## Examples
 
-See `examples/platformer/README.md` for a shared SUGI scene that can be exported to a browser canvas app or run directly in a native Tk desktop window.
+- `examples/platformer/README.md` - image sprite player, material sky/water/hologram surfaces, web and native frontends.
+- `examples/shader_water/README.md` - minimal custom vertex/fragment water material, web and native frontends.
+- `examples/login_canvas/README.md` - VM-driven login UI and input state.
 
-Additional demos:
+## Developing your own scene
 
-- `examples/portfolio_template/README.md` shows a polished Python-driven canvas portfolio with scroll lock, mouse trails, pen layers, full-frame shaders, and material/image sprites.
-- `examples/login_canvas/README.md` shows a canvas-only browser login where Python owns interactions and rendering state.
+Start with `docs/rendering_pipeline.md`. It explains YAML scene structure, supported render-tree fields, why static web demos need exported render trees, and how to connect custom shaders/images to renderer backends.

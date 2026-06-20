@@ -1,23 +1,18 @@
-# SUGI demos and feature showcases
+# SUGI examples
 
-Every demo follows the core SUGI rule: application code owns logic and mutates VM/protocol state; SUGI owns the scene graph, visual components, rendering commands, assets, shaders, particles, text, and layout.
+The repository now keeps only the supported end-to-end examples:
 
-| Demo | Scene | Web frontend | Native/frontend | Feature coverage |
+| Demo | Scene | Web | Native | Purpose |
 | --- | --- | --- | --- | --- |
-| Platformer | `platformer/platformer.yaml` | `platformer/web/index.html` | `platformer/native/platformer_native.py` | DOM nodes, sprites, camera-like world view, event-driven app logic outside SUGI |
-| Portfolio template | `portfolio_template/portfolio.yaml` | `portfolio_template/web/index.html` | Python server frontend | scroll lock, pen trails, shader surfaces, image/shader sprites, text |
-| Login canvas | `login_canvas/login.yaml` | `login_canvas/web/index.html` | Python server frontend | protocol-style input relay, text input components, declarative UI |
-| Tunnel runner 3D | `tunnel_runner_3d/scene.yaml` | `tunnel_runner_3d/index.html` | shared render tree | shader/postprocess-style tunnel visuals |
-| UI demo | `ui_demo/scene.yaml` | `ui_demo/web/index.html` | `ui_demo/native/ui_demo_native.py` | layout, buttons, text, events, animations, scroll regions |
-| Particles | `particles/scene.yaml` | `particles/web/index.html` | `particles/native/particles_native.py` | particle emitters, wind/gravity/lifetime parameters, pen layers |
-| Shaders | `shaders/scene.yaml` | `shaders/web/index.html` | `shaders/native/shaders_native.py` | application GLSL materials, postprocess, render targets, uniforms |
-| Image gallery | `image_gallery/scene.yaml` | `image_gallery/web/index.html` | `image_gallery/native/image_gallery_native.py` | cached images, SVG/PNG/JPEG/WEBP references, UVs, nine-slice, blend modes |
-| Dashboard | `dashboard/scene.yaml` | `dashboard/web/index.html` | `dashboard/native/dashboard_native.py` | protocol subscriptions, dashboard state, camera, grid layout, components |
+| Platformer | `platformer/platformer.yaml` | `platformer/web/index.html` | `platformer/native/platformer_native.py` | Gameplay mutates VM state while SUGI renders image sprites, material surfaces, and world geometry. |
+| Water shader | `shader_water/water.yaml` | `shader_water/index.html` | `shader_water/native/water_native.py` | Minimal custom vertex/fragment material example. |
+| Login page | `login_canvas/login.yaml` | `login_canvas/web/index.html` | `login_canvas/server/login_server.py` | VM-driven UI and input state without app-side drawing. |
 
-Regenerate static render trees with:
+Regenerate static web render trees with:
 
 ```bash
-for ex in ui_demo particles shaders image_gallery dashboard; do \
-  python tools/export_render_tree.py examples/$ex/scene.yaml examples/$ex/web/render_tree.json; \
-done
+python tools/export_render_tree.py examples/platformer/platformer.yaml examples/platformer/web/render_tree.json
+python tools/export_render_tree.py examples/shader_water/water.yaml examples/shader_water/render_tree.json
 ```
+
+Login uses the server/controller flow in `examples/login_canvas/server/login_server.py`.

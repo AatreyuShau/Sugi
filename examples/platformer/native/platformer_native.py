@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from sugi.compiler import Compiler
+from sugi.native_renderer import NativeCanvasRenderer
 from sugi.renderer import RenderNode, RenderTreeBuilder
 from sugi.vm import SugiVM
 
@@ -65,6 +66,7 @@ class PlatformerApp:
         self.app.title("SUGI Horizontal Platformer Native")
         self.canvas = tk.Canvas(self.app, width=WIDTH, height=HEIGHT, bg="#06111f", highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.renderer = NativeCanvasRenderer(self.canvas, self.roots, ROOT)
         self.app.bind("<KeyPress>", lambda event: self.keys.add(event.keysym.lower()))
         self.app.bind("<KeyRelease>", lambda event: self.keys.discard(event.keysym.lower()))
 
@@ -117,26 +119,10 @@ class PlatformerApp:
         return ax < bx + bw and ax + aw > bx and ay < by + bh and ay + ah > by
 
     def draw(self) -> None:
-        self.canvas.delete("all")
-        for node in self.nodes:
-            if node.type in {"shader_surface", "surface", "pen"}:
-                continue
-            if node.type in {"sprite", "platform"}:
-                source = self.vm.heap.get(node.handle).properties
-                x = float(source["x"]) - self.camera_x
-                y, w, h = (float(source[name]) for name in ("y", "width", "height"))
-                if x + w < -80 or x > WIDTH + 80:
-                    continue
-                fill = str(source.get("color", "#ffffff"))
-                if "player" in str(source.get("class", "")):
-                    self.canvas.create_oval(x + 10, y, x + w - 10, y + 24, fill="#fde68a", outline="")
-                    self.canvas.create_rectangle(x + 10, y + 22, x + w - 10, y + h - 8, fill="#38bdf8", outline="")
-                    self.canvas.create_rectangle(x + 14, y + h - 8, x + 24, y + h, fill="#0f172a", outline="")
-                    self.canvas.create_rectangle(x + w - 24, y + h - 8, x + w - 14, y + h, fill="#0f172a", outline="")
-                else:
-                    self.canvas.create_rectangle(x, y, x + w, y + h, fill=fill, outline="")
-            elif node.type == "text":
-                self.canvas.create_text(float(node.properties["x"]), float(node.properties["y"]), anchor="nw", text=str(node.properties["text"]), fill=str(node.properties.get("color", "#ffffff")), font=("Arial", int(node.properties.get("font_size", 16)), "bold"))
+        self.roots = RenderTreeBuilder().build(self.vm)
+        self.renderer.roots = self.roots
+        self.renderer.materials = self.renderer._materials()
+        self.renderer.render(self.camera_x)
         gx, gy, gw, gh = (float(self.goal.properties[name]) for name in ("x", "y", "width", "height"))
         if self.overlaps(self.player.x, self.player.y, self.player.width, self.player.height, gx, gy, gw, gh):
             self.canvas.create_text(WIDTH / 2, 120, text="You reached the hologram gate!", fill="#facc15", font=("Arial", 34, "bold"))

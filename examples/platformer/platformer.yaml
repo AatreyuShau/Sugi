@@ -92,23 +92,6 @@ page:
           uniforms:
             time: 0
             amplitude: 0.18
-    - type: pen
-      id: sine_water
-      x: 0
-      y: 458
-      width: 2600
-      height: 82
-      color: "#075985"
-      stroke: "#67e8f9"
-      parallax: 1
-      components:
-        - type: PenLayer
-          brush: glowing_trail
-          mode: sine_wave
-          amplitude: 16
-          wavelength: 150
-          history_limit: 260
-          glow: true
     - type: sprite
       id: player
       class: actor player

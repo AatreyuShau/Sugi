@@ -149,32 +149,6 @@
       },
       {
         "handle": 6,
-        "type": "pen",
-        "id": "sine_water",
-        "properties": {
-          "x": 0,
-          "y": 458,
-          "width": 2600,
-          "height": 82,
-          "color": "#075985",
-          "stroke": "#67e8f9",
-          "parallax": 1
-        },
-        "components": [
-          {
-            "type": "PenLayer",
-            "brush": "glowing_trail",
-            "mode": "sine_wave",
-            "amplitude": 16,
-            "wavelength": 150,
-            "history_limit": 260,
-            "glow": true
-          }
-        ],
-        "children": []
-      },
-      {
-        "handle": 7,
         "type": "sprite",
         "id": "player",
         "properties": {
@@ -216,7 +190,7 @@
         "children": []
       },
       {
-        "handle": 8,
+        "handle": 7,
         "type": "sprite",
         "id": "goal",
         "properties": {
@@ -244,7 +218,7 @@
         "children": []
       },
       {
-        "handle": 9,
+        "handle": 8,
         "type": "platform",
         "id": "ground",
         "properties": {
@@ -264,7 +238,7 @@
         "children": []
       },
       {
-        "handle": 10,
+        "handle": 9,
         "type": "platform",
         "id": "ledge_left",
         "properties": {
@@ -284,7 +258,7 @@
         "children": []
       },
       {
-        "handle": 11,
+        "handle": 10,
         "type": "platform",
         "id": "ledge_mid",
         "properties": {
@@ -304,7 +278,7 @@
         "children": []
       },
       {
-        "handle": 12,
+        "handle": 11,
         "type": "platform",
         "id": "ledge_ridge",
         "properties": {
@@ -324,7 +298,7 @@
         "children": []
       },
       {
-        "handle": 13,
+        "handle": 12,
         "type": "platform",
         "id": "ledge_goal",
         "properties": {
@@ -344,7 +318,7 @@
         "children": []
       },
       {
-        "handle": 14,
+        "handle": 13,
         "type": "text",
         "id": "instructions",
         "properties": {

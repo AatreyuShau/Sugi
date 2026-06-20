@@ -1,48 +1,52 @@
-# Render Capabilities
+# Render capabilities
 
-SUGI renderers consume render-tree nodes and interpret components. The VM stores scene state; it does not draw and it does not decide what visual effects exist.
+SUGI renderers consume VM DOM/render-tree nodes and interpret materials, sprites, text, and scene geometry. The VM stores scene state; it does not draw and it does not decide what visual effects exist.
 
-## Sprite nodes
+## Materials and shaders
 
-Any render node can be treated as an isolated sprite surface by renderer backends. Sprites can carry image references, UV regions, transforms, opacity, tint, blend modes, or a `ShaderMaterial` component. Applications supply image files and shader/material files; SUGI caches and binds them.
-
-## Shader materials
-
-`ShaderMaterial` marks a node as a viewport, sprite, or large-surface pass backed by application-supplied GLSL/WGSL stages. Backends compile and cache those stages, bind uniforms, share compatible programs, batch compatible materials, and allocate render targets as needed. SUGI does not define built-in shader effects.
+Materials are declared in YAML and point at application-owned shader files:
 
 ```yaml
-components:
-  - type: ShaderMaterial
+materials:
+  water:
     vertex: assets/shaders/screen.vert
     fragment: assets/shaders/water.frag
     uniforms:
-      speed: 0.3
+      iTime: auto
+      iResolution: auto
 ```
 
-Applications may mutate uniforms through the VM; the renderer updates GPU state during presentation.
+Backends compile/cache shaders, bind uniforms, and draw nodes that reference `material: water`. SUGI does not ship hidden water/cloud/aurora effects; those effects exist only as user shader assets.
 
-```python
-vm.set_uniform(water_node, "speed", 0.8)
+## Image sprites
+
+Sprite nodes can reference image assets with `image` or `source`:
+
+```yaml
+- type: sprite
+  id: player
+  image: assets/images/hero.svg
+  x: 96
+  y: 364
+  width: 52
+  height: 64
 ```
 
-## Pen layers
+Backends load/cache/upload images and draw textured quads. Supported image path extensions are PNG, JPG/JPEG, WEBP, and SVG.
 
-`PenLayer` marks a retained drawing surface for polylines, strokes, trails, signatures, ribbons, and brush data. Applications provide points or high-level stroke parameters. Renderer backends turn that retained data into vector paths, CPU raster strokes, or GPU line buffers.
+## Render trees
 
-## Particles
-
-Particle systems are generic renderer-owned draw streams. Applications define texture references, lifetimes, velocities, spawn rates, and curves. SUGI performs rendering and resource reuse, but it does not ship predefined effects as application behavior.
+Static frontends use exported render trees so they can render compiled VM DOM state without embedding the Python compiler. See `docs/rendering_pipeline.md` for the full format and rationale.
 
 ## Application boundary
 
-Applications must not issue backend drawing calls. They create nodes, mutate properties/variables/uniforms, dispatch events, and trigger animations. A backend calls `SceneRenderer.render(vm)` or `SceneRenderer.present(vm)` to traverse the DOM and produce a full frame.
+Applications must not issue backend drawing calls. They create nodes, mutate properties/variables/uniforms, dispatch events, and trigger animations. A backend calls the renderer to traverse the DOM/render tree and produce a frame.
 
 ```python
 vm.set_property(player, "x", 100)
-vm.set_uniform(water, "amplitude", 0.2)
-frame = SceneRenderer().render(vm)
+renderer.render(vm)
 ```
 
 ## Renderable nodes
 
-The reference renderer recognizes `page`, `panel`, `container`, `sprite`, `image`, `text`, `button`, `canvas`, `viewport`, `particle_system`, `pen`, and `shader_surface`. Unknown node types remain safe scene-graph data for future renderer extensions.
+The current demo renderers support `page`, `surface`, `shader_surface`, `sprite`, `image`, `platform`, and `text` nodes, with material metadata supplied through the VM/render tree.

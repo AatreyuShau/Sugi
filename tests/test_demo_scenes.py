@@ -6,14 +6,13 @@ from sugi.vm import SugiVM
 from tools.export_render_tree import export_render_tree
 
 
-def test_tunnel_runner_scene_compiles_and_exports(tmp_path):
-    scene = Path("examples/tunnel_runner_3d/scene.yaml")
+def test_water_shader_scene_compiles_and_exports_materials(tmp_path):
+    scene = Path("examples/shader_water/water.yaml")
     vm = SugiVM()
-    vm.execute(Compiler().compile_yaml(scene.read_text(encoding="utf-8")))
-    assert vm.query("#hovercraft")
-    assert vm.query("#energy_ring")
-    output = tmp_path / "tunnel_render_tree.json"
+    vm.execute_scene(Compiler().compile_scene(scene.read_text(encoding="utf-8")))
+    assert vm.query("#water_surface")
+    assert "water" in vm.materials
+    output = tmp_path / "water_render_tree.json"
     export_render_tree(scene, output)
-    encoded = json.dumps(json.loads(output.read_text(encoding="utf-8")))
-    assert "Camera3D" in encoded
-    assert "Ring3D" in encoded
+    tree = json.loads(output.read_text(encoding="utf-8"))
+    assert tree[0]["properties"]["__materials"]["water"]["fragment"] == "shaders/water.frag"
