@@ -16,6 +16,7 @@ class MaterialResource:
     vertex: str
     fragment: str
     uniforms: dict[str, Any] = field(default_factory=dict)
+    shadertoy: bool = False
 
 
 @dataclass
@@ -52,7 +53,7 @@ class AssetCache:
     def load_material(self, name: str, vertex: str, fragment: str, uniforms: dict[str, Any] | None = None) -> CacheEntry:
         self.load_shader(vertex)
         self.load_shader(fragment)
-        material = MaterialResource(name=name, vertex=vertex, fragment=fragment, uniforms=dict(uniforms or {}))
+        material = MaterialResource(name=name, vertex=vertex, fragment=fragment, uniforms=dict(uniforms or {}), shadertoy=bool((uniforms or {}).get("shadertoy", False)))
         return self.materials.setdefault(name, CacheEntry(name, material))
 
     def invalidate(self, key: str) -> None:
